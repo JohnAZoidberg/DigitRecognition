@@ -37,8 +37,9 @@ public class Network {
         }
     }
     
-    public void sgd(RealMatrix[][] trainingData, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
+    public double sgd(RealMatrix[][] trainingData, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
     	//int n = trainingData[0].getRowDimension();
+    	double accuracy = 0.0;
     	for(int i = 0; i < epochs; i++) {
     		int trainingSize = trainingData.length;
     		for(int j = 0; j + miniBatchSize < trainingSize; j+=miniBatchSize) {
@@ -47,16 +48,17 @@ public class Network {
         		updateMiniBatch(miniBatch, eta);
     		}
     		if(testData != null) {
-    			//double accuracy = evaluate(testData) * 100.0;
     			//System.out.println("Epoch " + i + " complete: " + new DecimalFormat("#.00").format(accuracy) + "%");
     			int hits = evaluate(testData);
-    			System.out.println("Epoch " + i + ": " + hits + " / " + testData.length + "  " + ((double) hits) / testData.length);
+    			accuracy = (((double) hits) / testData.length) * 100.0;
+    			System.out.println("Epoch " + i + ": " + hits + " / " + testData.length + "  " + accuracy + "%");
     			System.out.println();
     		}else {
     			System.out.println("Epoch " + i + " complete");
     			System.out.println();
     		}
     	}
+    	return accuracy;
     }
     
     public int evaluate(RealMatrix[][] testDatas) {
@@ -66,7 +68,7 @@ public class Network {
 		int tests = 0;
 		boolean whut = true;
 		for(RealMatrix[] testData : testDatas) {
-			RealMatrix testResult = feedForward(testData[0]);
+			RealMatrix testResult = feedForward(testData[0], null, null);
 			RealVector resultVector = testResult.getColumnVector(0);
 			int resultInt = resultVector.getMaxIndex();
 			int desiredInt = testData[1].getColumnVector(0).getMaxIndex();
@@ -145,14 +147,15 @@ public class Network {
     	return nabla;
     }
     
-    public RealMatrix feedForward(RealMatrix activations) {
+    public RealMatrix feedForward(RealMatrix activations, RealMatrix[] ffWeights, RealMatrix[] ffBiases) {
 
-		//RealMatrix weight = weights[1];
-		//RealMatrix weight2 = weights[2];
+		if(ffWeights == null) ffWeights = weights;
+		if(ffBiases == null) ffBiases = biases;
+			
     	for(int i = 0; i < layers - 1; i++) {
-    		RealMatrix weight = weights[i];
+    		RealMatrix weight = ffWeights[i];
     		RealMatrix z = weight.multiply(activations);
-    		z = z.add(biases[i]);
+    		z = z.add(ffBiases[i]);
     		activations = sigmoidVectorized(z);
     		//int j = 0;
     	}

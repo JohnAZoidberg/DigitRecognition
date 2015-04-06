@@ -1,6 +1,10 @@
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.*;
@@ -18,55 +22,71 @@ public class Test {
 	public Test() {
 		String[] args = {"src/train-labels.idx1-ubyte", "src/train-images.idx3-ubyte"};
 		try {
-			RealMatrix[][] data = importMNIST(args);
-			RealMatrix[][] trainingData = new RealMatrix[data.length / 2][];
-			RealMatrix[][] testData = new RealMatrix[data.length / 2][];
+			int datasetSize = 10;
+			RealMatrix[][] data = importMNIST(args, datasetSize);
+			double length = (double) data.length;
+			RealMatrix[][] trainingData = new RealMatrix[(int) (length * 0.9)][];
+			RealMatrix[][] testData = new RealMatrix[(int) (length * 0.1)][];
 			System.arraycopy(data, 0, trainingData, 0, trainingData.length);
 			System.arraycopy(data, trainingData.length, testData, 0, testData.length);
-			int t = 5;
-			for(RealMatrix[] example : trainingData) {
-				//displayData(example);
-				t--;
-				if(t <= 0) break;
-			}
-			
+
 			int[] sizes = {784, 30, 10};
 			Network net = new Network(sizes);
-			//int nr = 1000;
-			//RealMatrix[][] trainingData = generateData(nr);
-			//RealMatrix[][] testData = generateData(nr);
-			//RealMatrix a1 = trainingData[0][0];
-			//RealMatrix v1 = trainingData[0][1];
-			System.out.println("Untrained Output:");
-			System.out.println(net.evaluate(testData) + " / " + testData.length);
-			/*System.out.println("Input Activations:");
-			System.out.println(a1);
-			System.out.println("Desired Output:");
-			System.out.println(v1);
-			System.out.println("Untrained Output:");
-			System.out.println(net.feedForward(a1));
-			System.out.println();
-			System.out.println("Training:");*/
-			net.sgd(trainingData, 30, 10, 3.0, testData);
-	        /*System.out.println();
-			System.out.println("Trained Output:");
-			System.out.println(net.feedForward(a1));
-	        /*System.out.println();
-			System.out.println("Test with simple data:");
-	        double[][] matrixData = { 
-	        		{1},
-	        		{0.8},
-	        		{0.5}
-				};
-	        RealMatrix testActivations = MatrixUtils.createRealMatrix(matrixData);
-	        System.out.println(testActivations);
-			System.out.println(net.feedForward(testActivations));*/
-		} catch (IOException e) {
+			
+			Wrapper wrapper = loadNet();
+			RealMatrix[] weights = wrapper.geWeights();
+			RealMatrix[] biases = wrapper.getBiases();
+			double oldAccuracy = wrapper.getAccuracy();
+			if(weights != null && biases != null) {
+				int testNumber = (int)(Math.random() * datasetSize);
+				System.out.println("Test of saved weights and biases:");
+				RealMatrix expectedOutput = data[testNumber][1];
+				System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
+				System.out.println(expectedOutput);
+				RealMatrix trainedOutput = net.feedForward(data[testNumber][0], weights, biases);
+				System.out.println("Trained Output: " + trainedOutput.getColumnVector(0).getMaxIndex());
+				System.out.println(trainedOutput);
+			}
+
+			/*double accuracy = net.sgd(trainingData, 1, 50, 3.0, testData);
+			System.out.println("Final Accuracy: " + accuracy + "%");
+			saveNet(net.weights, net.biases, accuracy);*/
+		} catch (IOException | ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
+	private Wrapper loadNet() throws IOException, ClassNotFoundException {
+		Wrapper net = null;
+		// Read from disk using FileInputStream
+		FileInputStream f_in = new FileInputStream("net.data");
+		// Read object using ObjectInputStream
+		ObjectInputStream obj_in = new ObjectInputStream (f_in);
+		// Read an object
+		Object obj = obj_in.readObject();
+		obj_in.close();
+		if (obj instanceof Wrapper)
+		{
+			net = (Wrapper) obj;
+			
+		}
+		return net;
+	}
+
+	private void saveNet(RealMatrix[] weights, RealMatrix[] biases, double accuracy) throws IOException {
+		Wrapper net = new Wrapper(weights, biases, accuracy);
+		
+		// Write to disk with FileOutputStream
+		FileOutputStream f_out = new FileOutputStream("net.data");
+		// Write object with ObjectOutputStream
+		ObjectOutputStream obj_out = new ObjectOutputStream (f_out);
+		// Write object out to disk
+		obj_out.writeObject (net);
+		obj_out.close();
+		System.out.println("written to disk");
+	}
+
 	public static void displayData(RealMatrix[] example) {
 		RealMatrix vectorMatrix = example[0];
 		double[][] data = null;
@@ -109,8 +129,8 @@ public class Test {
 	   *          args[0]: label file; args[1]: data file.
 	   * @throws IOException
 	   */
-	private RealMatrix[][] importMNIST(String[] args) throws IOException {
-		RealMatrix[][] data = new RealMatrix[10000][3];
+	private RealMatrix[][] importMNIST(String[] args, int number) throws IOException {
+		RealMatrix[][] data = new RealMatrix[number][3];
 
 		DataInputStream labels = new DataInputStream(new FileInputStream(args[0]));
 		DataInputStream images = new DataInputStream(new FileInputStream(args[1]));
@@ -143,12 +163,12 @@ public class Test {
 			byte label = labels.readByte();
 			numLabelsRead++;
 			//double[][] image = new double[numCols][numRows];
-			double[][] vectorImage = new double[1][numCols * numRows];
+			double[][] vectorImage = new double[numCols * numRows][1];
 			int i = 0;
 			for (int colIdx = 0; colIdx < numCols; colIdx++) {
 				for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
 		        	//image[colIdx][rowIdx] = ((double) images.readUnsignedByte());
-		        	vectorImage[0][i] = ((double) images.readUnsignedByte()) / 255.0;
+		        	vectorImage[i][0] = ((double) images.readUnsignedByte()) / 255.0;
 		        	i++;
 		        }
 			}
@@ -156,13 +176,13 @@ public class Test {
 		
 			// At this point, 'label' and 'image' agree and you can do whatever you like with them.
 			//RealMatrix imatrix = MatrixUtils.createRealMatrix(image);
-			RealMatrix vectorImatrix = MatrixUtils.createRealMatrix(vectorImage).transpose();
+			RealMatrix vectorImatrix = MatrixUtils.createRealMatrix(vectorImage);
 			vectorImage = null;
 			RealMatrix vectorSolution = vectorizeSolution(label);
 			data[j][0] = vectorImatrix;
 			data[j][1] = vectorSolution;
 		    j++;
-		    if(j == 10000) break;
+		    if(j == number) break;
 		}
 		if (numLabelsRead % 10 == 0) {
 			System.out.print(".");

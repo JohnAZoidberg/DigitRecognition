@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.Random;
 import java.text.DecimalFormat;
 
@@ -20,16 +21,16 @@ public class Network {
         Random random = new Random();
         // Initialize Weights
         for(int l = 0; l < layers - 1; l++) {
-        	double[][] weightData = new double[sizes[l]][sizes[l]];
+        	double[][] weightData = new double[sizes[l + 1]][sizes[l]];
         	for(int j = 0; j < sizes[l]; j++) {
-	        	for(int i = 0; i < sizes[l]; i++) {
+	        	for(int i = 0; i < sizes[l + 1]; i++) {
 	        		weightData[i][j] = random.nextGaussian();
 	        	}
         	}
         	weights[l] = MatrixUtils.createRealMatrix(weightData);
 
-        	double[][] biasData = new double[1][sizes[l]];
-        	for(int i = 0; i < sizes[l]; i++) {
+        	double[][] biasData = new double[1][sizes[l + 1]];
+        	for(int i = 0; i < sizes[l + 1]; i++) {
         		biasData[0][i] = random.nextGaussian();
         	}
         	biases[l] = MatrixUtils.createRealMatrix(biasData).transpose();
@@ -40,13 +41,16 @@ public class Network {
     	//int n = trainingData[0].getRowDimension();
     	for(int i = 0; i < epochs; i++) {
     		int trainingSize = trainingData.length;
-    		for(RealMatrix[] miniBatch : trainingData) {
-        		//RealMatrix[] miniBatch = trainingData;
+    		for(int j = 0; j + miniBatchSize < trainingSize; j+=miniBatchSize) {
+    			//int end = (1 + j) * miniBatchSize;
+        		RealMatrix[][] miniBatch = Arrays.copyOfRange(trainingData, j, j + miniBatchSize);
         		updateMiniBatch(miniBatch, eta);
     		}
     		if(testData != null) {
-    			double accuracy = evaluate(testData) * 100.0;
-    			System.out.println("Epoch " + i + " complete: " + new DecimalFormat("#.00").format(accuracy) + "%");
+    			//double accuracy = evaluate(testData) * 100.0;
+    			//System.out.println("Epoch " + i + " complete: " + new DecimalFormat("#.00").format(accuracy) + "%");
+    			int hits = evaluate(testData);
+    			System.out.println("Epoch " + i + ": " + hits + " / " + testData.length + "  " + ((double) hits) / testData.length);
     			System.out.println();
     		}else {
     			System.out.println("Epoch " + i + " complete");
@@ -55,39 +59,53 @@ public class Network {
     	}
     }
     
-    private double evaluate(RealMatrix[][] testDatas) {
+    public int evaluate(RealMatrix[][] testDatas) {
 		double sumOfDifferences = 0.0;
 		double sumOfPercentages = 0.0;
+		int sumOfMatches = 0;
 		int tests = 0;
 		boolean whut = true;
 		for(RealMatrix[] testData : testDatas) {
 			RealMatrix testResult = feedForward(testData[0]);
+			RealVector resultVector = testResult.getColumnVector(0);
+			int resultInt = resultVector.getMaxIndex();
+			int desiredInt = testData[1].getColumnVector(0).getMaxIndex();
+			String match = "";
+			if(resultInt == desiredInt) {
+				sumOfMatches++;
+				match = "  -- YES!!";
+			}
+			//System.out.println("Actual: "  + resultInt + ", Desired: " + desiredInt + match);
+			tests++;
 			if(whut) {
-				System.out.println(testResult);
+				//System.out.println(testResult);
 				whut = false;
 			}
-			int testRows = testResult.getRowDimension();
+			/*int testRows = testResult.getRowDimension();
 			for(int i = 0; i < testRows; i++) {
 				double result = testResult.getEntry(i, 0);
 				double desired = testData[1].getEntry(i, 0);
 				sumOfDifferences += Math.abs(result - desired);
 				sumOfPercentages += Math.abs(1 - result / desired);
 				tests++;
-			}
+			}*/
 		}
-		double sum = sumOfPercentages;
-		return sum / ((double) tests);
+		double sum = (double) sumOfMatches;
+		return sumOfMatches;
 	}
 
-	private void updateMiniBatch(RealMatrix miniBatch[], double eta) {
-    	RealMatrix[][] nabla = backpropagate(miniBatch[0], miniBatch[1]);
-    	RealMatrix[] nablaW = nabla[0];
-    	RealMatrix[] nablaB = nabla[1];
-    	
-    	for(int l = 0; l < layers - 1; l++) {
-    		weights[l] = weights[l].subtract(nablaW[l].scalarMultiply(eta / miniBatch.length));
-    		biases[l] = biases[l].subtract(nablaB[l].scalarMultiply(eta / miniBatch.length));
-    	}
+	private void updateMiniBatch(RealMatrix[][] miniBatch, double eta) {
+		for(RealMatrix[] data : miniBatch) {
+			//Test.displayData(data);
+	    	RealMatrix[][] nabla = backpropagate(data[0], data[1]);
+	    	RealMatrix[] nablaW = nabla[0];
+	    	RealMatrix[] nablaB = nabla[1];
+	    	
+	    	for(int l = 0; l < layers - 1; l++) {
+	    		weights[l] = weights[l].subtract(nablaW[l].scalarMultiply(eta / ((double) data.length)));
+	    		biases[l] = biases[l].subtract(nablaB[l].scalarMultiply(eta / ((double) data.length)));
+	    	}
+		}
     }
     
     private RealMatrix[][] backpropagate(RealMatrix activation, RealMatrix y) {
@@ -133,7 +151,8 @@ public class Network {
 		//RealMatrix weight2 = weights[2];
     	for(int i = 0; i < layers - 1; i++) {
     		RealMatrix weight = weights[i];
-    		RealMatrix z = weight.multiply(activations).add(biases[i]);
+    		RealMatrix z = weight.multiply(activations);
+    		z = z.add(biases[i]);
     		activations = sigmoidVectorized(z);
     		//int j = 0;
     	}
@@ -141,11 +160,16 @@ public class Network {
     }
     
     private RealMatrix hadamard(RealMatrix x, RealMatrix y) {
-    	RealVector xVector = x.getColumnVector(0);
-    	RealVector yVector = y.getColumnVector(0);
-    	RealVector resultVector = xVector.ebeMultiply(yVector);
-    	RealMatrix result = MatrixUtils.createRealMatrix(resultVector.getDimension(), 1);
-    	result.setColumnVector(0, resultVector);
+    	if(x.getRowDimension() != y.getRowDimension() || x.getColumnDimension() != y.getColumnDimension()) ;
+    	int columns = x.getColumnDimension();
+    	int rows = x.getRowDimension();
+    	RealMatrix result = MatrixUtils.createRealMatrix(rows, columns);
+    	for(int i = 0; i < columns; i++) {
+	    	RealVector xVector = x.getColumnVector(i);
+	    	RealVector yVector = y.getColumnVector(i);
+	    	RealVector resultVector = xVector.ebeMultiply(yVector);
+	    	result.setColumnVector(i, resultVector);
+    	}
     	return result;
     }
     

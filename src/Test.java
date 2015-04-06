@@ -1,3 +1,6 @@
+import java.io.IOException;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.*;
@@ -12,39 +15,74 @@ public class Test {
 		new Test();
 	}
 	
-	public Test() {        
-		int[] sizes = {3, 3, 3};
-		Network net = new Network(sizes);
-		int nr = 1000;
-		RealMatrix[][] trainingData = generateData(nr);
-		RealMatrix[][] testData = generateData(nr);
-		RealMatrix a1 = trainingData[0][0];
-		RealMatrix v1 = trainingData[0][1];
-		
-		System.out.println("Input Activations:");
-		System.out.println(a1);
-		System.out.println("Desired Output:");
-		System.out.println(v1);
-		System.out.println("Untrained Output:");
-		System.out.println(net.feedForward(a1));
-		System.out.println();
-		System.out.println("Training:");
-		net.sgd(trainingData, 100, 10, 1.0, testData);
-        System.out.println();
-		System.out.println("Trained Output:");
-		System.out.println(net.feedForward(a1));
-        System.out.println();
-		System.out.println("Test with simple data:");
-        double[][] matrixData = { 
-        		{1},
-        		{0.8},
-        		{0.5}
-			};
-        RealMatrix testActivations = MatrixUtils.createRealMatrix(matrixData);
-        System.out.println(testActivations);
-		System.out.println(net.feedForward(testActivations));
+	public Test() {
+		String[] args = {"src/train-labels.idx1-ubyte", "src/train-images.idx3-ubyte"};
+		try {
+			RealMatrix[][] data = importMNIST(args);
+			RealMatrix[][] trainingData = new RealMatrix[data.length / 2][];
+			RealMatrix[][] testData = new RealMatrix[data.length / 2][];
+			System.arraycopy(data, 0, trainingData, 0, trainingData.length);
+			System.arraycopy(data, trainingData.length, testData, 0, testData.length);
+			int t = 5;
+			for(RealMatrix[] example : trainingData) {
+				//displayData(example);
+				t--;
+				if(t <= 0) break;
+			}
+			
+			int[] sizes = {784, 30, 10};
+			Network net = new Network(sizes);
+			//int nr = 1000;
+			//RealMatrix[][] trainingData = generateData(nr);
+			//RealMatrix[][] testData = generateData(nr);
+			//RealMatrix a1 = trainingData[0][0];
+			//RealMatrix v1 = trainingData[0][1];
+			System.out.println("Untrained Output:");
+			System.out.println(net.evaluate(testData) + " / " + testData.length);
+			/*System.out.println("Input Activations:");
+			System.out.println(a1);
+			System.out.println("Desired Output:");
+			System.out.println(v1);
+			System.out.println("Untrained Output:");
+			System.out.println(net.feedForward(a1));
+			System.out.println();
+			System.out.println("Training:");*/
+			net.sgd(trainingData, 30, 10, 3.0, testData);
+	        /*System.out.println();
+			System.out.println("Trained Output:");
+			System.out.println(net.feedForward(a1));
+	        /*System.out.println();
+			System.out.println("Test with simple data:");
+	        double[][] matrixData = { 
+	        		{1},
+	        		{0.8},
+	        		{0.5}
+				};
+	        RealMatrix testActivations = MatrixUtils.createRealMatrix(matrixData);
+	        System.out.println(testActivations);
+			System.out.println(net.feedForward(testActivations));*/
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
+	public static void displayData(RealMatrix[] example) {
+		RealMatrix vectorMatrix = example[0];
+		double[][] data = null;
+		RealMatrix imatrix = MatrixUtils.createRealMatrix(data);
+		RealMatrix solutionMatrix = example[1];
+		System.out.println(solutionMatrix.getColumnVector(0).getMaxIndex());
+		for(int i = 0; i < imatrix.getRowDimension(); i++) {
+			double[] vec = imatrix.getRow(i);
+			String vecString = "Row " + i + ": ";
+			for(double num : vec) {
+				vecString += num + ", ";
+			}
+			System.out.println(vecString);
+		}
+	}
+
 	private RealMatrix[][] generateData(int number) {
 		Random random = new Random();
 		RealMatrix[][] trainingData = new RealMatrix[number][2];
@@ -63,5 +101,93 @@ public class Test {
 			trainingData[i][1] = MatrixUtils.createRealMatrix(v1Data);
 		}
 		return trainingData;
+	}
+	
+	
+	/**
+	   * @param args
+	   *          args[0]: label file; args[1]: data file.
+	   * @throws IOException
+	   */
+	private RealMatrix[][] importMNIST(String[] args) throws IOException {
+		RealMatrix[][] data = new RealMatrix[10000][3];
+
+		DataInputStream labels = new DataInputStream(new FileInputStream(args[0]));
+		DataInputStream images = new DataInputStream(new FileInputStream(args[1]));
+		int magicNumber = labels.readInt();
+		if (magicNumber != 2049) {
+			System.err.println("Label file has wrong magic number: " + magicNumber + " (should be 2049)");
+			System.exit(0);
+		}
+		magicNumber = images.readInt();
+		if (magicNumber != 2051) {
+			System.err.println("Image file has wrong magic number: " + magicNumber + " (should be 2051)");
+			System.exit(0);
+		}
+		int numLabels = labels.readInt();
+		int numImages = images.readInt();
+		int numRows = images.readInt();
+		int numCols = images.readInt();
+		if (numLabels != numImages) {
+			System.err.println("Image file and label file do not contain the same number of entries.");
+			System.err.println("  Label file contains: " + numLabels);
+			System.err.println("  Image file contains: " + numImages);
+			System.exit(0);
+		}
+		
+		long start = System.currentTimeMillis();
+		int numLabelsRead = 0;
+		int numImagesRead = 0;
+		int j = 0;
+		while (labels.available() > 0 && numLabelsRead < numLabels) {
+			byte label = labels.readByte();
+			numLabelsRead++;
+			//double[][] image = new double[numCols][numRows];
+			double[][] vectorImage = new double[1][numCols * numRows];
+			int i = 0;
+			for (int colIdx = 0; colIdx < numCols; colIdx++) {
+				for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
+		        	//image[colIdx][rowIdx] = ((double) images.readUnsignedByte());
+		        	vectorImage[0][i] = ((double) images.readUnsignedByte()) / 255.0;
+		        	i++;
+		        }
+			}
+			numImagesRead++;
+		
+			// At this point, 'label' and 'image' agree and you can do whatever you like with them.
+			//RealMatrix imatrix = MatrixUtils.createRealMatrix(image);
+			RealMatrix vectorImatrix = MatrixUtils.createRealMatrix(vectorImage).transpose();
+			vectorImage = null;
+			RealMatrix vectorSolution = vectorizeSolution(label);
+			data[j][0] = vectorImatrix;
+			data[j][1] = vectorSolution;
+		    j++;
+		    if(j == 10000) break;
+		}
+		if (numLabelsRead % 10 == 0) {
+			System.out.print(".");
+		}
+		if ((numLabelsRead % 800) == 0) {
+		    System.out.print(" " + numLabelsRead + " / " + numLabels);
+		    long end = System.currentTimeMillis();
+		    long elapsed = end - start;
+		    long minutes = elapsed / (1000 * 60);
+		    long seconds = (elapsed / 1000) - (minutes * 60);
+		    System.out.println("  " + minutes + " m " + seconds + " s ");
+		}
+		
+		System.out.println();
+		long end = System.currentTimeMillis();
+		long elapsed = end - start;
+		long minutes = elapsed / (1000 * 60);
+		long seconds = (elapsed / 1000) - (minutes * 60);
+		System.out.println("Read " + numLabelsRead + " samples in " + minutes + " m " + seconds + " s ");
+		return data;
+	}
+	
+	private RealMatrix vectorizeSolution(byte number) {
+		RealMatrix matrix = MatrixUtils.createRealMatrix(10, 1);
+		matrix.setEntry(number, 0, 1);
+		return matrix;
 	}
 }

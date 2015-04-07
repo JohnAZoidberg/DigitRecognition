@@ -37,22 +37,25 @@ public class Network {
         }
     }
     
-    public double sgd(RealMatrix[][] trainingData, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
+    public double sgd(/*RealMatrix[][] trainingData*/int trainingSize, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
+		String[] args = {"src/train-labels.idx1-ubyte", "src/train-images.idx3-ubyte"};
     	//int n = trainingData[0].getRowDimension();
     	double accuracy = 0.0;
     	for(int i = 0; i < epochs; i++) {
-    		int trainingSize = trainingData.length;
-    		for(int j = 0; j + miniBatchSize < trainingSize; j+=miniBatchSize) {
-    			//int end = (1 + j) * miniBatchSize;
-        		RealMatrix[][] miniBatch = Arrays.copyOfRange(trainingData, j, j + miniBatchSize);
+    		/*int trainingSize = trainingData.length;
+    		trainingData = shuffleArray(trainingData);*/
+    		for(int j = 0; j + miniBatchSize <= trainingSize; j+=miniBatchSize) {
+        		//RealMatrix[][] miniBatch = Arrays.copyOfRange(trainingData, j, j + miniBatchSize - 1);
+    			String[] sources = {"src/train-labels.idx1-ubyte", "src/train-images.idx3-ubyte"};
+    			RealMatrix[][] miniBatch = Test.importMNIST(sources, j, j + miniBatchSize - 1);
         		updateMiniBatch(miniBatch, eta);
     		}
     		if(testData != null) {
     			//System.out.println("Epoch " + i + " complete: " + new DecimalFormat("#.00").format(accuracy) + "%");
-    			int hits = evaluate(testData);
+    			int hits = evaluate(testData, null, null);
     			accuracy = (((double) hits) / testData.length) * 100.0;
     			System.out.println("Epoch " + i + ": " + hits + " / " + testData.length + "  " + accuracy + "%");
-    			System.out.println();
+    			//System.out.println();
     		}else {
     			System.out.println("Epoch " + i + " complete");
     			System.out.println();
@@ -61,14 +64,14 @@ public class Network {
     	return accuracy;
     }
     
-    public int evaluate(RealMatrix[][] testDatas) {
+    public int evaluate(RealMatrix[][] testDatas, RealMatrix[] ffWeights, RealMatrix[] ffBiases) {
 		double sumOfDifferences = 0.0;
 		double sumOfPercentages = 0.0;
 		int sumOfMatches = 0;
 		int tests = 0;
 		boolean whut = true;
 		for(RealMatrix[] testData : testDatas) {
-			RealMatrix testResult = feedForward(testData[0], null, null);
+			RealMatrix testResult = feedForward(testData[0], ffWeights, ffBiases);
 			RealVector resultVector = testResult.getColumnVector(0);
 			int resultInt = resultVector.getMaxIndex();
 			int desiredInt = testData[1].getColumnVector(0).getMaxIndex();
@@ -202,5 +205,18 @@ public class Network {
     		array[i][0] = sigmoidPrime(array[i][0]);
     	}
     	return MatrixUtils.createRealMatrix(array);
+    }
+ 
+    // Implementing Fisher–Yates shuffle
+    public static RealMatrix[][] shuffleArray(RealMatrix[][] ar) {    	
+		Random rnd = new Random();
+		for (int i = ar.length - 1; i > 0; i--) {
+			int index = rnd.nextInt(i + 1);
+			// Simple swap
+			RealMatrix[] a = ar[index];
+			ar[index] = ar[i];
+			ar[i] = a;
+		}
+		return ar;
     }
 }

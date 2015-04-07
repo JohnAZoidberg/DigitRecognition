@@ -1,3 +1,5 @@
+package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
+
 import java.io.Serializable;
 import org.apache.commons.math3.linear.RealMatrix;
 

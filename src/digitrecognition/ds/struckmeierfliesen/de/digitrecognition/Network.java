@@ -1,3 +1,5 @@
+package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
+
 import java.util.Arrays;
 import java.util.Random;
 import java.text.DecimalFormat;
@@ -38,7 +40,6 @@ public class Network {
     }
     
     public double sgd(/*RealMatrix[][] trainingData*/int trainingSize, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
-		String[] args = {"src/train-labels.idx1-ubyte", "src/train-images.idx3-ubyte"};
     	//int n = trainingData[0].getRowDimension();
     	double accuracy = 0.0;
     	for(int i = 0; i < epochs; i++) {
@@ -46,7 +47,7 @@ public class Network {
     		trainingData = shuffleArray(trainingData);*/
     		for(int j = 0; j + miniBatchSize <= trainingSize; j+=miniBatchSize) {
         		//RealMatrix[][] miniBatch = Arrays.copyOfRange(trainingData, j, j + miniBatchSize - 1);
-    			String[] sources = {"src/train-labels.idx1-ubyte", "src/train-images.idx3-ubyte"};
+    			String[] sources = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
     			RealMatrix[][] miniBatch = Test.importMNIST(sources, j, j + miniBatchSize - 1);
         		updateMiniBatch(miniBatch, eta);
     		}

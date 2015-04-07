@@ -1,5 +1,8 @@
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
+package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
+
+import java.awt.*;
+import java.awt.color.*;
+import java.awt.image.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -11,8 +14,10 @@ import java.io.ObjectOutputStream;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 
 import org.apache.commons.math3.linear.*;
+
 
 /**
  * Created by Daniel Schäfer on 04.04.2015.
@@ -20,18 +25,37 @@ import org.apache.commons.math3.linear.*;
 
 public class Test {
 
-	String[] args = {"src/train-labels.idx1-ubyte", "src/train-images.idx3-ubyte"};
-	String[] testArgs = {"src/t10k-labels.idx1-ubyte", "src/t10k-images.idx3-ubyte"};
+	String[] args = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
+	String[] testArgs = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};
 	
-	public static void main(String[] args) {
-		new Test();
+	public static void main(String[] args) throws IOException {
+		//new Test(loadImage("own3.png", 3));
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                } catch (Exception e) {
+                    // use default
+                }
+                DrawWindow bp = new DrawWindow();
+
+                JFrame f = new JFrame("DooDoodle!");
+                f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                f.setLocationByPlatform(true);
+
+                f.setContentPane(bp.getGui());
+
+                f.pack();
+                f.setMinimumSize(f.getSize());
+                f.setVisible(true);
+            }
+        };
+        SwingUtilities.invokeLater(r);
 	}
 	
-	public Test() {
-		try {
-			RealMatrix[] image = loadImage();
-			image[0] = image[0];
-			
+	public Test(RealMatrix[] checkImage) {
+		try {			
 			int datasetSize = 1000;
 			/*RealMatrix[][] data = importMNIST(args, 0, datasetSize);
 			double length = (double) data.length;
@@ -40,33 +64,58 @@ public class Test {
 			System.arraycopy(data, 0, trainingData, 0, trainingData.length);
 			System.arraycopy(data, trainingData.length, testData, 0, testData.length);*/
 			//RealMatrix[][] trainingData = importMNIST(args, 0, 900);
-			RealMatrix[][] testData = importMNIST(testArgs, 0, 10000);
+			//RealMatrix[][] testData = importMNIST(testArgs, 0, 10000);
 			
 			int[] sizes = {784, 30, 10};
 			Network net = new Network(sizes);
 			
-			Wrapper wrapper = loadNet("src/net.data");
+			Wrapper wrapper = loadNet("net.data");
 			RealMatrix[] weights = wrapper.geWeights();
 			RealMatrix[] biases = wrapper.getBiases();
 			double oldAccuracy = wrapper.getAccuracy();
 			if(weights != null && biases != null) {
-				System.out.println("Expected Accuracy: " + oldAccuracy);
-				//testNet(net, weights, biases);
-				/*int testNumber = (int)(Math.random() * datasetSize);
-				RealMatrix[] img = image;//data[testNumber];
-				displayData(img);
-				System.out.println("Test of saved weights and biases:");
-				RealMatrix expectedOutput = img[1];
-				System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
-				System.out.println(expectedOutput);
-				RealMatrix trainedOutput = net.feedForward(img[0], weights, biases);
-				System.out.println("Trained Output: " + trainedOutput.getColumnVector(0).getMaxIndex());
-				System.out.println(trainedOutput);
+				RealMatrix[] image;
+				RealMatrix expectedOutput;
+				RealMatrix trainedOutput;
+				if(checkImage != null) {
+					System.out.println("Expected Accuracy: " + oldAccuracy + "%");
+					//testNet(net, weights, biases, testData);
+					displayData(checkImage);
+					//displayImage(checkImage);
+					System.out.println("Test of saved weights and biases:");
+					expectedOutput = checkImage[1];
+					System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
+					System.out.println(expectedOutput);
+					trainedOutput = net.feedForward(checkImage[0], weights, biases);
+					int firstGuess = trainedOutput.getColumnVector(0).getMaxIndex();
+					System.out.println("Trained Output: " + firstGuess);
+					System.out.println(trainedOutput);
+					RealVector column = trainedOutput.getColumnVector(0);
+					column.setEntry(firstGuess, 0);
+					trainedOutput.setColumnVector(0, column);
+					int secondGuess = trainedOutput.getColumnVector(0).getMaxIndex();
+					JOptionPane.showMessageDialog(null, "First guess: " + firstGuess + ", Second guess: " + secondGuess);
+				}else {
+					System.out.println("Expected Accuracy: " + oldAccuracy + "%");
+					//testNet(net, weights, biases, testData);
+					int testNumber = (int)(Math.random() * datasetSize);
+					 image = loadImage("own5.png", 5);
+					displayData(image);
+					displayImage(image);
+					System.out.println("Test of saved weights and biases:");
+					expectedOutput = image[1];
+					System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
+					System.out.println(expectedOutput);
+					trainedOutput = net.feedForward(image[0], weights, biases);
+					System.out.println("Trained Output: " + trainedOutput.getColumnVector(0).getMaxIndex());
+					System.out.println(trainedOutput);
+				}
 				
-				System.out.println();
+				/*System.out.println();
 				testNumber = (int)(Math.random() * 100);
 				img = testData[testNumber];
 				displayData(img);
+				displayImage(img);
 				System.out.println("Test of saved weights and biases:");
 				expectedOutput = img[1];
 				System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
@@ -76,30 +125,49 @@ public class Test {
 				System.out.println(trainedOutput);*/
 			}
 
-			double accuracy = net.sgd(1000, 5, 100, 3.0, testData);
+			/*double accuracy = net.sgd(10000, 10, 1000, 3.0, testData);
 			System.out.println("Final Accuracy: " + accuracy + "%");
-			if(accuracy > 91.0/*oldAccuracy*/) saveNet(net.weights, net.biases, accuracy);
+			if(accuracy > oldAccuracy) saveNet(net.weights, net.biases, accuracy);*/
 		} catch (IOException | ClassNotFoundException  e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	private void testNet(Network net, RealMatrix[] weights, RealMatrix[] biases) {
+	private static void displayImage(RealMatrix[] example) {
+		RealMatrix vectorMatrix = example[0];
+		int[] buffer = new int[784];
+		for(int row = 0; row < 784; row++) {
+			buffer[row] = 255 - (int) (vectorMatrix.getEntry(row, 0) * 255);
+		}
+		
+		int VERTICAL_PIXELS = 28;
+		int HORIZONTAL_PIXELS = VERTICAL_PIXELS;
+		BufferedImage image = getImageFromArray(buffer, VERTICAL_PIXELS, HORIZONTAL_PIXELS);
+		
+		JFrame frame = new JFrame("Handwritten " + example[1].getColumnVector(0).getMaxIndex());
+		frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+		frame.pack();
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setSize(250, 200);
+		frame.setVisible(true);
+	}
+	
+	private void testNet(Network net, RealMatrix[] weights, RealMatrix[] biases, RealMatrix[][] testData) {
 		double accSum = 0.0;
-		for(int i = 0; i < 10000; i+=5000) {
-			RealMatrix[][] testData = importMNIST(testArgs, i, i + 5000);
+		//for(int i = 0; i < 10000; i+=5000) {
+			//RealMatrix[][] testData = importMNIST(testArgs, i, i + 5000);
 			int hits = net.evaluate(testData, weights, biases);
 			double accuracy = (((double) hits) / testData.length) * 100.0;
 			System.out.println(hits + " / " + testData.length + "  " + accuracy + "%");
 			accSum += accuracy;
-		}
-		System.out.println("Average Accuracy: " + accSum / 2);
+		//}
+		System.out.println("Average Accuracy: " + accuracy + "%");
 	}
 
-	private RealMatrix[] loadImage() throws IOException {
+	private static RealMatrix[] loadImage(String path, int number) throws IOException {
 		RealMatrix[] data = new RealMatrix[3];
-		BufferedImage image = ImageIO.read(new File( "src/own7.png" ));
+		BufferedImage image = ImageIO.read(new File(path));
 		double[][] grayData = new double[784][1];
 		int numCols = image.getWidth();
 		int numRows = image.getHeight();
@@ -116,7 +184,7 @@ public class Test {
 	        }
 		}
 		data[0] = MatrixUtils.createRealMatrix(grayData);
-		data[1] = vectorizeSolution((byte) 7);
+		data[1] = vectorizeSolution((byte) number);
 		return data;
 	}
 	
@@ -285,4 +353,35 @@ public class Test {
 		matrix.setEntry(number, 0, 1);
 		return matrix;
 	}
+	
+	/**
+	 * Converts a given Image into a BufferedImage
+	 *
+	 * @param img The Image to be converted
+	 * @return The converted BufferedImage
+	 */
+	public static BufferedImage toBufferedImage(Image img) {
+		if (img instanceof BufferedImage) {
+		    return (BufferedImage) img;
+		}
+		
+		// Create a buffered image with transparency
+		BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+		
+		// Draw the image on to the buffered image
+		Graphics2D bGr = bimage.createGraphics();
+		bGr.drawImage(img, 0, 0, null);
+		bGr.dispose();
+		
+		// Return the buffered image
+		return bimage;
+	}
+	
+	public static BufferedImage getImageFromArray(int[] pixels, int width, int height) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+        WritableRaster raster = (WritableRaster) image.getData();
+        raster.setPixels(0, 0, width, height, pixels);
+        image.setData(raster);
+        return image;
+    }
 }

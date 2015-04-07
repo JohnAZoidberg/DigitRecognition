@@ -224,7 +224,6 @@ public class Test {
 				System.err.println("  Image file contains: " + numImages);
 				System.exit(0);
 			}
-			System.err.println("  Label file contains: " + numLabels);
 			
 			long start = System.currentTimeMillis();
 			int numLabelsRead = 0;

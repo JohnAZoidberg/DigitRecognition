@@ -11,9 +11,9 @@ import org.apache.commons.math3.linear.*;
  */
 
 public class Network {
-    int layers;
-    RealMatrix[] weights;
-    RealMatrix[] biases;
+    private int layers;
+    private RealMatrix[] weights;
+    private RealMatrix[] biases;
 
     public Network(int[] sizes) {
         layers = sizes.length;
@@ -37,6 +37,16 @@ public class Network {
         	}
         	biases[l] = MatrixUtils.createRealMatrix(biasData).transpose();
         }
+    }
+    
+    public RealMatrix[][] getWeightsBiases() {
+    	RealMatrix[][] weightsBiases = {weights, biases};
+    	return weightsBiases;
+    }
+    
+    public void setWeightsBiases(RealMatrix[] weights, RealMatrix[] biases) {
+    	this.weights = weights;
+    	this.biases = biases;
     }
     
     public double sgd(/*RealMatrix[][] trainingData*/int trainingSize, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {

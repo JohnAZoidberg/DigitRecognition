@@ -6,9 +6,11 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Random;
@@ -24,12 +26,13 @@ import org.apache.commons.math3.linear.*;
  */
 
 public class Test {
-
 	String[] args = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
 	String[] testArgs = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};
+	Network net;
+	
 	
 	public static void main(String[] args) throws IOException {
-		//new Test(loadImage("own3.png", 3));
+		//new Test(null);
         Runnable r = new Runnable() {
             @Override
             public void run() {
@@ -40,7 +43,7 @@ public class Test {
                 }
                 DrawWindow bp = new DrawWindow();
 
-                JFrame f = new JFrame("DooDoodle!");
+                JFrame f = new JFrame("Digit Recognition");
                 f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 f.setLocationByPlatform(true);
 
@@ -53,10 +56,25 @@ public class Test {
         };
         SwingUtilities.invokeLater(r);
 	}
+	public Test() {
+		int[] sizes = {784, 30, 10};
+		net = new Network(sizes);
+		
+		try {
+			Wrapper wrapper = loadNet("net.data");
+			RealMatrix[] weights = wrapper.geWeights();
+			RealMatrix[] biases = wrapper.getBiases();
+			double oldAccuracy = wrapper.getAccuracy();
+			net.setWeightsBiases(weights, biases);			
+		} catch (ClassNotFoundException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	public Test(RealMatrix[] checkImage) {
 		try {			
-			int datasetSize = 1000;
+			int datasetSize = 10000;
 			/*RealMatrix[][] data = importMNIST(args, 0, datasetSize);
 			double length = (double) data.length;
 			RealMatrix[][] trainingData = new RealMatrix[(int) (length * 0.9)][];
@@ -64,7 +82,6 @@ public class Test {
 			System.arraycopy(data, 0, trainingData, 0, trainingData.length);
 			System.arraycopy(data, trainingData.length, testData, 0, testData.length);*/
 			//RealMatrix[][] trainingData = importMNIST(args, 0, 900);
-			//RealMatrix[][] testData = importMNIST(testArgs, 0, 10000);
 			
 			int[] sizes = {784, 30, 10};
 			Network net = new Network(sizes);
@@ -81,7 +98,7 @@ public class Test {
 					System.out.println("Expected Accuracy: " + oldAccuracy + "%");
 					//testNet(net, weights, biases, testData);
 					displayData(checkImage);
-					//displayImage(checkImage);
+					displayImage(checkImage);
 					System.out.println("Test of saved weights and biases:");
 					expectedOutput = checkImage[1];
 					System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
@@ -96,10 +113,11 @@ public class Test {
 					int secondGuess = trainedOutput.getColumnVector(0).getMaxIndex();
 					JOptionPane.showMessageDialog(null, "First guess: " + firstGuess + ", Second guess: " + secondGuess);
 				}else {
+					RealMatrix[][] testData = importMNIST(testArgs, 0, 10000);
 					System.out.println("Expected Accuracy: " + oldAccuracy + "%");
 					//testNet(net, weights, biases, testData);
 					int testNumber = (int)(Math.random() * datasetSize);
-					 image = loadImage("own5.png", 5);
+					image = testData[testNumber];//loadImage("own5.png", 5);
 					displayData(image);
 					displayImage(image);
 					System.out.println("Test of saved weights and biases:");
@@ -125,13 +143,29 @@ public class Test {
 				System.out.println(trainedOutput);*/
 			}
 
-			/*double accuracy = net.sgd(10000, 10, 1000, 3.0, testData);
+			/*double accuracy = net.sgd(60000, 10, 1000, 3.0, testData);
 			System.out.println("Final Accuracy: " + accuracy + "%");
 			if(accuracy > oldAccuracy) saveNet(net.weights, net.biases, accuracy);*/
 		} catch (IOException | ClassNotFoundException  e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public int[] guessDigit(RealMatrix[] checkImage, RealMatrix[] weights, RealMatrix[] biases) {
+		RealMatrix trainedOutput = net.feedForward(checkImage[0], weights, biases);
+		int firstGuess = trainedOutput.getColumnVector(0).getMaxIndex();
+		RealVector column = trainedOutput.getColumnVector(0);
+		column.setEntry(firstGuess, 0);
+		trainedOutput.setColumnVector(0, column);
+		int secondGuess = trainedOutput.getColumnVector(0).getMaxIndex();
+		int[] guesses = {firstGuess, secondGuess};
+		return guesses;
+	}
+	
+	public int[] guessDigit(RealMatrix[] checkImage) {
+		RealMatrix[][] weightsBiases = net.getWeightsBiases();
+		return guessDigit(checkImage, weightsBiases[0], weightsBiases[1]);
 	}
 	
 	private static void displayImage(RealMatrix[] example) {
@@ -191,7 +225,7 @@ public class Test {
 	private Wrapper loadNet(String path) throws IOException, ClassNotFoundException {
 		Wrapper net = null;
 		// Read from disk using FileInputStream
-		FileInputStream f_in = new FileInputStream(path);
+		InputStream f_in = (InputStream) this.getClass().getResourceAsStream(path);
 		// Read object using ObjectInputStream
 		ObjectInputStream obj_in = new ObjectInputStream (f_in);
 		// Read an object
@@ -341,7 +375,7 @@ public class Test {
 			long elapsed = end - start;
 			long minutes = elapsed / (1000 * 60);
 			long seconds = (elapsed / 1000) - (minutes * 60);
-			System.out.println("Read samples " + startIndex + " to " + endIndex + "(" + (numLabelsRead + 1 - startIndex) + ") in " + minutes + " m " + seconds + " s ");
+			//System.out.println("Read samples " + startIndex + " to " + endIndex + "(" + (numLabelsRead + 1 - startIndex) + ") in " + minutes + " m " + seconds + " s ");
 		}catch(IOException  e) {
 			e.printStackTrace();
 		}

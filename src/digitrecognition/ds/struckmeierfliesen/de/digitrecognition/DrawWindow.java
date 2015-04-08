@@ -3,6 +3,7 @@ package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
 import java.awt.*;
 import java.awt.RenderingHints.Key;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.*;
 import java.io.*;
 import java.util.*;
@@ -17,33 +18,25 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
-public class DrawWindow {/** Reference to the original image. */
-    private BufferedImage originalImage;
-    /** Image used to make changes. */
+public class DrawWindow {
     private BufferedImage canvasImage;
-    /** The main GUI that might be added to a frame or applet. */
-    private JPanel gui;
-    /** The color to use when calling clear, text or other 
-     * drawing functionality. */
-    private Color color = Color.BLACK;
-    /** General user messages. */
-    private JLabel output = new JLabel("You DooDoodle!");
-
-    private BufferedImage colorSample = new BufferedImage(
-            16,16,BufferedImage.TYPE_INT_RGB);
-    private JLabel imageLabel;
-    private int activeTool = DRAW_TOOL;
-    public static final int DRAW_TOOL = 1;
     
-    public final int SIZE = 28;
+    private JPanel gui;
+    
+    // Drawing color
+    private Color color = Color.BLACK;
 
-    private Point selectionStart; 
-    private Rectangle selection;
-    private boolean dirty = false;
-    private Stroke stroke = new BasicStroke(
-            3,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND,1.7f);
+    private JLabel imageLabel;
+    private JLabel guessLabel;
+    
+    public final int SIZE = 280;
+    public final int DEFAULT_STROKE_SIZE = 30;
+    
+    private Stroke stroke = new BasicStroke(DEFAULT_STROKE_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.7f);
     private RenderingHints renderingHints;
 
+    
+    
     public JComponent getGui() {
         if (gui==null) {
             Map<Key, Object> hintsMap = new HashMap<RenderingHints.Key,Object>();
@@ -68,9 +61,7 @@ public class DrawWindow {/** Reference to the original image. */
             JToolBar tb = new JToolBar();
             tb.setFloatable(false);
 
-            setColor(color);
-
-            final SpinnerNumberModel strokeModel = new SpinnerNumberModel(3,1,25,1);
+            final SpinnerNumberModel strokeModel = new SpinnerNumberModel(DEFAULT_STROKE_SIZE, 20, 35, 1);
             JSpinner strokeSize = new JSpinner(strokeModel);
             ChangeListener strokeListener = new ChangeListener() {
                 @Override
@@ -96,34 +87,19 @@ public class DrawWindow {/** Reference to the original image. */
 
             ActionListener clearListener = new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
-                    int result = JOptionPane.OK_OPTION;
-                    if (dirty) {
-                        result = JOptionPane.showConfirmDialog(
-                                gui, "Erase the current painting?");
-                    }
-                    if (result==JOptionPane.OK_OPTION) {
-                        clear(canvasImage);
-                    }
+                	guessLabel.setText("");
+                	clear(canvasImage);
                 }
             };
             JButton clearButton = new JButton("Clear");
             tb.add(clearButton);
             clearButton.addActionListener(clearListener);
+
+            guessLabel = new JLabel("");
+            tb.add(guessLabel);
             
-            JButton guessButton = new JButton("Guess");
-            tb.add(guessButton);
-            guessButton.addActionListener(guessListener);
-
             gui.add(tb, BorderLayout.PAGE_START);
-
-            JToolBar tools = new JToolBar(JToolBar.VERTICAL);
-            tools.setFloatable(false);
-            JButton crop = new JButton("Crop");
-
-            gui.add(tools, BorderLayout.LINE_END);
-
-            gui.add(output,BorderLayout.PAGE_END);
-            clear(colorSample);
+            
             clear(canvasImage);
         }
 
@@ -142,7 +118,6 @@ public class DrawWindow {/** Reference to the original image. */
     }
 
     public void setImage(BufferedImage image) {
-        this.originalImage = image;
         int w = image.getWidth();
         int h = image.getHeight();
         canvasImage = new BufferedImage(w,h,BufferedImage.TYPE_INT_ARGB);
@@ -152,20 +127,9 @@ public class DrawWindow {/** Reference to the original image. */
         g.drawImage(image, 0, 0, gui);
         g.dispose();
 
-        selection = new Rectangle(0,0,w,h); 
-        if (this.imageLabel!=null) {
-            imageLabel.setIcon(new ImageIcon(canvasImage));
-            this.imageLabel.repaint();
-        }
         if (gui!=null) {
             gui.invalidate();
         }
-    }
-
-    /** Set the current painting color and refresh any elements needed. */
-    public void setColor(Color color) {
-        this.color = color;
-        clear(colorSample);
     }
 
     private void showError(Throwable t) {
@@ -219,70 +183,73 @@ public class DrawWindow {/** Reference to the original image. */
 
         @Override
         public void mousePressed(MouseEvent arg0) {
-             if (activeTool==DrawWindow.DRAW_TOOL) {
-                // TODO
-                draw(arg0.getPoint());
-            } else {
-                JOptionPane.showMessageDialog(
-                        gui, 
-                        "Application error.  :(", 
-                        "Error!", 
-                        JOptionPane.ERROR_MESSAGE);
-            }
+			if(arg0.getButton() == MouseEvent.BUTTON1) {
+				color = Color.BLACK;
+			}else if(arg0.getButton() == MouseEvent.BUTTON3) {
+				color = Color.WHITE;
+			}
+			draw(arg0.getPoint());
         }
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			guessImage();
+		}
     }
 
     class ImageMouseMotionListener implements MouseMotionListener {
 
         @Override
         public void mouseDragged(MouseEvent arg0) {
-            reportPositionAndColor(arg0);
-            if (activeTool==DrawWindow.DRAW_TOOL) {
-                draw(arg0.getPoint());
-            }
+        	draw(arg0.getPoint());
         }
 
-        @Override
-        public void mouseMoved(MouseEvent arg0) {
-            reportPositionAndColor(arg0);
-        }
+		@Override
+		public void mouseMoved(MouseEvent arg0) {
+			// TODO Auto-generated method stub
+		}
 
     }
+    
+    private void guessImage() {
+        BufferedImage image = DrawWindow.this.canvasImage;
+        image = resize(image, 28, 28);
+        
+        RealMatrix[] data = new RealMatrix[2];
+		double[][] grayData = new double[784][1];
+		int numCols = image.getWidth();
+		int numRows = image.getHeight();
+		
+		int i = 0;
+		for (int colIdx = 0; colIdx < numCols; colIdx++) {
+			for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
+	        	int rgb = image.getRGB(rowIdx, colIdx);
+	        	int r = (rgb >> 16) & 0xFF;
+	        	int g = (rgb >> 8) & 0xFF;
+	        	int b = (rgb & 0xFF);
+	        	grayData[i][0] = (double) (255 - (r + g + b) / 3) / 255.0;
+	        	i++;
+	        }
+		}
+		int number = 0;
+		data[0] = MatrixUtils.createRealMatrix(grayData);
+		RealMatrix matrix = MatrixUtils.createRealMatrix(10, 1);
+		matrix.setEntry(number, 0, 1);
+		data[1] = matrix;
+		
+		Test test = new Test();
+		int[] guesses = test.guessDigit(data);
+		guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
+	}
+    
+    public static BufferedImage resize(BufferedImage img, int newW, int newH) { 
+        Image tmp = img.getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+        BufferedImage dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
 
-    private void reportPositionAndColor(MouseEvent me) {
-        String text = "";
-            text += "X,Y: " + (me.getPoint().x+1) + "," + (me.getPoint().y+1);
-        output.setText(text);
-    }
-    ActionListener guessListener = new ActionListener() {
+        Graphics2D g2d = dimg.createGraphics();
+        g2d.drawImage(tmp, 0, 0, null);
+        g2d.dispose();
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            BufferedImage image = DrawWindow.this.canvasImage;
-
-            RealMatrix[] data = new RealMatrix[2];
-    		double[][] grayData = new double[784][1];
-    		int numCols = image.getWidth();
-    		int numRows = image.getHeight();
-    		
-    		int i = 0;
-    		for (int colIdx = 0; colIdx < numCols; colIdx++) {
-    			for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
-    	        	int rgb = image.getRGB(rowIdx, colIdx);
-    	        	int r = (rgb >> 16) & 0xFF;
-    	        	int g = (rgb >> 8) & 0xFF;
-    	        	int b = (rgb & 0xFF);
-    	        	grayData[i][0] = (double) (255 - (r + g + b) / 3) / 255.0;
-    	        	i++;
-    	        }
-    		}
-    		int number = 0;
-    		data[0] = MatrixUtils.createRealMatrix(grayData);
-    		RealMatrix matrix = MatrixUtils.createRealMatrix(10, 1);
-    		matrix.setEntry(number, 0, 1);
-    		data[1] = matrix;
-    		
-    		new Test(data);
-        }
-    };
+        return dimg;
+    } 
 }

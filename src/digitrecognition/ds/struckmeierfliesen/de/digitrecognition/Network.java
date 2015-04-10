@@ -1,8 +1,6 @@
 package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
 
-import java.util.Arrays;
 import java.util.Random;
-import java.text.DecimalFormat;
 
 import org.apache.commons.math3.linear.*;
 
@@ -76,37 +74,22 @@ public class Network {
     }
     
     public int evaluate(RealMatrix[][] testDatas, RealMatrix[] ffWeights, RealMatrix[] ffBiases) {
-		double sumOfDifferences = 0.0;
-		double sumOfPercentages = 0.0;
 		int sumOfMatches = 0;
-		int tests = 0;
 		boolean whut = true;
 		for(RealMatrix[] testData : testDatas) {
 			RealMatrix testResult = feedForward(testData[0], ffWeights, ffBiases);
 			RealVector resultVector = testResult.getColumnVector(0);
 			int resultInt = resultVector.getMaxIndex();
 			int desiredInt = testData[1].getColumnVector(0).getMaxIndex();
-			String match = "";
 			if(resultInt == desiredInt) {
 				sumOfMatches++;
-				match = "  -- YES!!";
 			}
 			//System.out.println("Actual: "  + resultInt + ", Desired: " + desiredInt + match);
-			tests++;
 			if(whut) {
 				//System.out.println(testResult);
 				whut = false;
 			}
-			/*int testRows = testResult.getRowDimension();
-			for(int i = 0; i < testRows; i++) {
-				double result = testResult.getEntry(i, 0);
-				double desired = testData[1].getEntry(i, 0);
-				sumOfDifferences += Math.abs(result - desired);
-				sumOfPercentages += Math.abs(1 - result / desired);
-				tests++;
-			}*/
 		}
-		double sum = (double) sumOfMatches;
 		return sumOfMatches;
 	}
 

@@ -3,17 +3,12 @@ package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
 import java.awt.*;
 import java.awt.RenderingHints.Key;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.*;
-import java.io.*;
 import java.util.*;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -132,42 +127,6 @@ public class DrawWindow {
         }
     }
 
-    private void showError(Throwable t) {
-        JOptionPane.showMessageDialog(
-                gui, 
-                t.getMessage(), 
-                t.toString(), 
-                JOptionPane.ERROR_MESSAGE);
-    }
-
-    JFileChooser chooser = null;
-
-    public JFileChooser getFileChooser() {
-        if (chooser==null) {
-            chooser = new JFileChooser();
-            FileFilter ff = new FileNameExtensionFilter("Image files", ImageIO.getReaderFileSuffixes());
-            chooser.setFileFilter(ff);
-        }
-        return chooser;
-
-    }
-
-    public boolean canExit() {
-        boolean canExit = false;
-        SecurityManager sm = System.getSecurityManager();
-        if (sm==null) {
-            canExit = true;
-        } else {
-            try {
-                sm.checkExit(0);
-                canExit = true; 
-            } catch(Exception stayFalse) {
-            }
-        }
-
-        return canExit;
-    }
-
     public void draw(Point point) {
         Graphics2D g = this.canvasImage.createGraphics();
         g.setRenderingHints(renderingHints);
@@ -213,7 +172,11 @@ public class DrawWindow {
     
     private void guessImage() {
         BufferedImage image = DrawWindow.this.canvasImage;
-        image = resize(image, 28, 28);
+        image = ImageUtils.getCroppedImage(image, 0);
+        //ImageUtils.displayImage(image, -1);
+        image = ImageUtils.resizeRatio(image, 28, 28);
+        System.out.println("Height: " + image.getHeight() + ", width: " + image.getWidth());
+        image = ImageUtils.embedWithWhiteBackground(image);
         
         RealMatrix[] data = new RealMatrix[2];
 		double[][] grayData = new double[784][1];
@@ -241,15 +204,4 @@ public class DrawWindow {
 		int[] guesses = test.guessDigit(data);
 		guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
 	}
-    
-    public static BufferedImage resize(BufferedImage img, int newW, int newH) { 
-        Image tmp = img.getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
-        BufferedImage dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
-
-        Graphics2D g2d = dimg.createGraphics();
-        g2d.drawImage(tmp, 0, 0, null);
-        g2d.dispose();
-
-        return dimg;
-    } 
 }

@@ -160,6 +160,7 @@ public class Test {
 		trainedOutput.setColumnVector(0, column);
 		int secondGuess = trainedOutput.getColumnVector(0).getMaxIndex();
 		int[] guesses = {firstGuess, secondGuess};
+		displayImage(checkImage);
 		return guesses;
 	}
 	
@@ -179,12 +180,9 @@ public class Test {
 		int HORIZONTAL_PIXELS = VERTICAL_PIXELS;
 		BufferedImage image = getImageFromArray(buffer, VERTICAL_PIXELS, HORIZONTAL_PIXELS);
 		
-		JFrame frame = new JFrame("Handwritten " + example[1].getColumnVector(0).getMaxIndex());
-		frame.getContentPane().add(new JLabel(new ImageIcon(image)));
-		frame.pack();
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setSize(250, 200);
-		frame.setVisible(true);
+		//image = DrawWindow.resize(image, 280, 280);
+		
+		ImageUtils.displayImage(image, example[1].getColumnVector(0).getMaxIndex());
 	}
 	
 	private void testNet(Network net, RealMatrix[] weights, RealMatrix[] biases, RealMatrix[][] testData) {

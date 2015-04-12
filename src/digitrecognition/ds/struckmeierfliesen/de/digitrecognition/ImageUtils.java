@@ -5,14 +5,15 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 
-import javax.imageio.ImageWriteParam;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 public class ImageUtils {
 
+	public static JFrame displayedFrame = null;
     
     public static BufferedImage resizeRatio(BufferedImage img, int maxW, int maxH) {
     	double oldH = (double) img.getHeight();
@@ -80,10 +81,10 @@ public class ImageUtils {
 	    int bGreen  = (int)((b & 0x0000FF00) >>> 8);    // Green level
 	    int bBlue   = (int)(b & 0x000000FF);            // Blue level
 
-	    double distance = Math.sqrt((aAlpha-bAlpha)*(aAlpha-bAlpha) +
-	                                (aRed-bRed)*(aRed-bRed) +
-	                                (aGreen-bGreen)*(aGreen-bGreen) +
-	                                (aBlue-bBlue)*(aBlue-bBlue));
+	    double distance = Math.sqrt((aAlpha-bAlpha) * (aAlpha-bAlpha) +
+	                                (aRed-bRed) * (aRed-bRed) +
+	                                (aGreen-bGreen) * (aGreen-bGreen) +
+	                                (aBlue-bBlue) * (aBlue-bBlue));
 
 	    // 510.0 is the maximum distance between two colors 
 	    // (0,0,0,0 -> 255,255,255,255)
@@ -118,12 +119,21 @@ public class ImageUtils {
 		return c;
 	}
 	
-	public static void displayImage(BufferedImage image, int nr) {		
-		JFrame frame = new JFrame("Handwritten " + nr);
-		frame.getContentPane().add(new JLabel(new ImageIcon(image)));
-		frame.pack();
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setSize(400, 400);
-		frame.setVisible(true);
+	public static void displayImage(BufferedImage image, int nr, boolean closeOld) {		
+		if(closeOld && displayedFrame != null) displayedFrame.dispose();
+		displayedFrame = new JFrame("Handwritten " + nr);
+		displayedFrame.getContentPane().add(new JLabel(new ImageIcon(image)));
+		displayedFrame.pack();
+		displayedFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		displayedFrame.setSize(400, 400);
+		displayedFrame.setVisible(true);
 	}
+	
+	public static BufferedImage getImageFromArray(int[] pixels, int width, int height) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+        WritableRaster raster = (WritableRaster) image.getData();
+        raster.setPixels(0, 0, width, height, pixels);
+        image.setData(raster);
+        return image;
+    }
 }

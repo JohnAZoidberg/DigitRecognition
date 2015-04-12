@@ -1,5 +1,6 @@
 package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.*;
@@ -47,24 +48,41 @@ public class Network {
     	this.biases = biases;
     }
     
-    public double sgd(/*RealMatrix[][] trainingData*/int trainingSize, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
-    	//int n = trainingData[0].getRowDimension();
+    public double sgd(int trainingSize, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
     	double accuracy = 0.0;
     	for(int i = 0; i < epochs; i++) {
-    		/*int trainingSize = trainingData.length;
-    		trainingData = shuffleArray(trainingData);*/
     		for(int j = 0; j + miniBatchSize <= trainingSize; j+=miniBatchSize) {
-        		//RealMatrix[][] miniBatch = Arrays.copyOfRange(trainingData, j, j + miniBatchSize - 1);
     			String[] sources = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
     			RealMatrix[][] miniBatch = Test.importMNIST(sources, j, j + miniBatchSize - 1);
         		updateMiniBatch(miniBatch, eta);
     		}
     		if(testData != null) {
-    			//System.out.println("Epoch " + i + " complete: " + new DecimalFormat("#.00").format(accuracy) + "%");
     			int hits = evaluate(testData, null, null);
     			accuracy = (((double) hits) / testData.length) * 100.0;
     			System.out.println("Epoch " + i + ": " + hits + " / " + testData.length + "  " + accuracy + "%");
-    			//System.out.println();
+    		}else {
+    			System.out.println("Epoch " + i + " complete");
+    			System.out.println();
+    		}
+    	}
+    	return accuracy;
+    }
+    
+    public double sgd(RealMatrix[][] trainingData, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
+    	//int n = trainingData[0].getRowDimension();
+    	double accuracy = 0.0;
+    	for(int i = 0; i < epochs; i++) {
+    		int trainingSize = trainingData.length;
+    		trainingData = shuffleArray(trainingData);
+    		for(int j = 0; j + miniBatchSize <= trainingSize; j+=miniBatchSize) {
+        		RealMatrix[][] miniBatch = Arrays.copyOfRange(trainingData, j, j + miniBatchSize - 1);
+        		updateMiniBatch(miniBatch, eta);
+    		}
+    		
+    		if(testData != null) {
+    			int hits = evaluate(testData, null, null);
+    			accuracy = (((double) hits) / testData.length) * 100.0;
+    			System.out.println("Epoch " + i + ": " + hits + " / " + testData.length + "  " + accuracy + "%");
     		}else {
     			System.out.println("Epoch " + i + " complete");
     			System.out.println();
@@ -113,6 +131,7 @@ public class Network {
     	
     	RealMatrix[] activations = new RealMatrix[layers - 1];
     	RealMatrix[] zs = new RealMatrix[layers - 1];
+    	// nablaW and nablaB are the gradients of the weights and biases
     	RealMatrix[] nablaW = new RealMatrix[layers - 1];
     	RealMatrix[] nablaB = new RealMatrix[layers - 1];
     	

@@ -10,10 +10,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-
-public class DrawWindow {
+public class DrawWindow implements KeyListener {
     private BufferedImage canvasImage;
     
     private JPanel gui;
@@ -33,7 +30,7 @@ public class DrawWindow {
     
     
     public JComponent getGui() {
-        if (gui==null) {
+        if(gui == null) {
             Map<Key, Object> hintsMap = new HashMap<RenderingHints.Key,Object>();
             hintsMap.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             hintsMap.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
@@ -152,7 +149,9 @@ public class DrawWindow {
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
-			guessImage();
+	        BufferedImage image = DrawWindow.this.canvasImage;
+			int[] guesses = Test.guessDigit(image);
+			guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
 		}
     }
 
@@ -169,39 +168,19 @@ public class DrawWindow {
 		}
 
     }
-    
-    private void guessImage() {
-        BufferedImage image = DrawWindow.this.canvasImage;
-        image = ImageUtils.getCroppedImage(image, 0);
-        //ImageUtils.displayImage(image, -1);
-        image = ImageUtils.resizeRatio(image, 28, 28);
-        System.out.println("Height: " + image.getHeight() + ", width: " + image.getWidth());
-        image = ImageUtils.embedWithWhiteBackground(image);
-        
-        RealMatrix[] data = new RealMatrix[2];
-		double[][] grayData = new double[784][1];
-		int numCols = image.getWidth();
-		int numRows = image.getHeight();
-		
-		int i = 0;
-		for (int colIdx = 0; colIdx < numCols; colIdx++) {
-			for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
-	        	int rgb = image.getRGB(rowIdx, colIdx);
-	        	int r = (rgb >> 16) & 0xFF;
-	        	int g = (rgb >> 8) & 0xFF;
-	        	int b = (rgb & 0xFF);
-	        	grayData[i][0] = (double) (255 - (r + g + b) / 3) / 255.0;
-	        	i++;
-	        }
-		}
-		int number = 0;
-		data[0] = MatrixUtils.createRealMatrix(grayData);
-		RealMatrix matrix = MatrixUtils.createRealMatrix(10, 1);
-		matrix.setEntry(number, 0, 1);
-		data[1] = matrix;
-		
-		Test test = new Test();
-		int[] guesses = test.guessDigit(data);
-		guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		//if(e.getKeyChar() == KeyEvent.VK_DOWN) {
+		//}
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		System.out.println(e.getKeyChar());
 	}
 }

@@ -26,14 +26,17 @@ import org.apache.commons.math3.linear.*;
  */
 
 public class Test {
-	String[] args = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
-	String[] testArgs = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};
+	String[] paths = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
+	String[] testPaths = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};
 	Network net;
 	
 	
 	public static void main(String[] args) throws IOException {
-		//new Test(null);
-        Runnable r = new Runnable() {
+		/*for(int i = 0; i < 10; i++) {
+			int[] guesses = Test.guessDigit(ImageIO.read(new File("own" + i + ".png")));
+			System.out.println("Should be " + i + ", guessed either " + guesses[0] + " or " + guesses[1]);
+		}
+        */Runnable r = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -55,6 +58,17 @@ public class Test {
             }
         };
         SwingUtilities.invokeLater(r);
+		/*String[] paths = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
+		RealMatrix[][] matrices = importMNIST(paths, 0, 10000);
+		for(int i = 0; i < 50000; i++) {
+			displayImage(matrices[i], true);
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}*/
 	}
 	public Test() {
 		int[] sizes = {784, 30, 10};
@@ -98,7 +112,7 @@ public class Test {
 					System.out.println("Expected Accuracy: " + oldAccuracy + "%");
 					//testNet(net, weights, biases, testData);
 					displayData(checkImage);
-					displayImage(checkImage);
+					displayImage(checkImage, true);
 					System.out.println("Test of saved weights and biases:");
 					expectedOutput = checkImage[1];
 					System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
@@ -113,13 +127,13 @@ public class Test {
 					int secondGuess = trainedOutput.getColumnVector(0).getMaxIndex();
 					JOptionPane.showMessageDialog(null, "First guess: " + firstGuess + ", Second guess: " + secondGuess);
 				}else {
-					RealMatrix[][] testData = importMNIST(testArgs, 0, 10000);
+					RealMatrix[][] testData = importMNIST(testPaths, 0, 10000);
 					System.out.println("Expected Accuracy: " + oldAccuracy + "%");
 					//testNet(net, weights, biases, testData);
 					int testNumber = (int)(Math.random() * datasetSize);
 					image = testData[testNumber];//loadImage("own5.png", 5);
 					displayData(image);
-					displayImage(image);
+					displayImage(image, true);
 					System.out.println("Test of saved weights and biases:");
 					expectedOutput = image[1];
 					System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
@@ -160,7 +174,7 @@ public class Test {
 		trainedOutput.setColumnVector(0, column);
 		int secondGuess = trainedOutput.getColumnVector(0).getMaxIndex();
 		int[] guesses = {firstGuess, secondGuess};
-		displayImage(checkImage);
+		displayImage(checkImage, true);
 		return guesses;
 	}
 	
@@ -168,8 +182,40 @@ public class Test {
 		RealMatrix[][] weightsBiases = net.getWeightsBiases();
 		return guessDigit(checkImage, weightsBiases[0], weightsBiases[1]);
 	}
+    
+    public static int[] guessDigit(BufferedImage image) {
+        image = ImageUtils.getCroppedImage(image, 0);
+        image = ImageUtils.resizeRatio(image, 24, 24);
+        //System.out.println("Height: " + image.getHeight() + ", width: " + image.getWidth());
+        image = ImageUtils.embedWithWhiteBackground(image);
+        
+        RealMatrix[] data = new RealMatrix[2];
+		double[][] grayData = new double[784][1];
+		int numCols = image.getWidth();
+		int numRows = image.getHeight();
+		
+		int i = 0;
+		for (int colIdx = 0; colIdx < numCols; colIdx++) {
+			for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
+	        	int rgb = image.getRGB(rowIdx, colIdx);
+	        	int r = (rgb >> 16) & 0xFF;
+	        	int g = (rgb >> 8) & 0xFF;
+	        	int b = (rgb & 0xFF);
+	        	grayData[i][0] = (double) (255 - (r + g + b) / 3) / 255.0;
+	        	i++;
+	        }
+		}
+		int number = 0;
+		data[0] = MatrixUtils.createRealMatrix(grayData);
+		RealMatrix matrix = MatrixUtils.createRealMatrix(10, 1);
+		matrix.setEntry(number, 0, 1);
+		data[1] = matrix;
+		
+		Test test = new Test();
+		return test.guessDigit(data);
+	}
 	
-	private static void displayImage(RealMatrix[] example) {
+	private static void displayImage(RealMatrix[] example, boolean closeOld) {
 		RealMatrix vectorMatrix = example[0];
 		int[] buffer = new int[784];
 		for(int row = 0; row < 784; row++) {
@@ -178,11 +224,34 @@ public class Test {
 		
 		int VERTICAL_PIXELS = 28;
 		int HORIZONTAL_PIXELS = VERTICAL_PIXELS;
-		BufferedImage image = getImageFromArray(buffer, VERTICAL_PIXELS, HORIZONTAL_PIXELS);
+		BufferedImage image = ImageUtils.getImageFromArray(buffer, VERTICAL_PIXELS, HORIZONTAL_PIXELS);
 		
-		//image = DrawWindow.resize(image, 280, 280);
+		image = ImageUtils.resize(image, 280, 280);
 		
-		ImageUtils.displayImage(image, example[1].getColumnVector(0).getMaxIndex());
+		ImageUtils.displayImage(image, example[1].getColumnVector(0).getMaxIndex(), closeOld);
+	}
+
+	public static void displayData(RealMatrix[] example) {
+		RealMatrix vectorMatrix = example[0];
+		double[][] data = new double[28][28];
+		int row = 0;
+		for(int i = 0; i < 28; i++) {
+			for(int j = 0; j < 28; j++) {
+				data[j][i] = vectorMatrix.getEntry(row, 0);
+				row++;
+			}
+		}
+		RealMatrix imatrix = MatrixUtils.createRealMatrix(data);
+		RealMatrix solutionMatrix = example[1];
+		System.out.println(solutionMatrix.getColumnVector(0).getMaxIndex());
+		for(int i = 0; i < imatrix.getColumnDimension(); i++) {
+			double[] vec = imatrix.getColumn(i);
+			String vecString = "Row " + i + ": ";
+			for(double num : vec) {
+				vecString += Math.round(num * 100.0) / 100.0 + ", ";
+			}
+			System.out.println(vecString);
+		}
 	}
 	
 	private void testNet(Network net, RealMatrix[] weights, RealMatrix[] biases, RealMatrix[][] testData) {
@@ -248,29 +317,6 @@ public class Test {
 		obj_out.writeObject (net);
 		obj_out.close();
 		System.out.println("written to disk");
-	}
-
-	public static void displayData(RealMatrix[] example) {
-		RealMatrix vectorMatrix = example[0];
-		double[][] data = new double[28][28];
-		int row = 0;
-		for(int i = 0; i < 28; i++) {
-			for(int j = 0; j < 28; j++) {
-				data[j][i] = vectorMatrix.getEntry(row, 0);
-				row++;
-			}
-		}
-		RealMatrix imatrix = MatrixUtils.createRealMatrix(data);
-		RealMatrix solutionMatrix = example[1];
-		System.out.println(solutionMatrix.getColumnVector(0).getMaxIndex());
-		for(int i = 0; i < imatrix.getColumnDimension(); i++) {
-			double[] vec = imatrix.getColumn(i);
-			String vecString = "Row " + i + ": ";
-			for(double num : vec) {
-				vecString += Math.round(num * 100.0) / 100.0 + ", ";
-			}
-			System.out.println(vecString);
-		}
 	}
 
 	private RealMatrix[][] generateData(int number) {
@@ -385,35 +431,4 @@ public class Test {
 		matrix.setEntry(number, 0, 1);
 		return matrix;
 	}
-	
-	/**
-	 * Converts a given Image into a BufferedImage
-	 *
-	 * @param img The Image to be converted
-	 * @return The converted BufferedImage
-	 */
-	public static BufferedImage toBufferedImage(Image img) {
-		if (img instanceof BufferedImage) {
-		    return (BufferedImage) img;
-		}
-		
-		// Create a buffered image with transparency
-		BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-		
-		// Draw the image on to the buffered image
-		Graphics2D bGr = bimage.createGraphics();
-		bGr.drawImage(img, 0, 0, null);
-		bGr.dispose();
-		
-		// Return the buffered image
-		return bimage;
-	}
-	
-	public static BufferedImage getImageFromArray(int[] pixels, int width, int height) {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
-        WritableRaster raster = (WritableRaster) image.getData();
-        raster.setPixels(0, 0, width, height, pixels);
-        image.setData(raster);
-        return image;
-    }
 }

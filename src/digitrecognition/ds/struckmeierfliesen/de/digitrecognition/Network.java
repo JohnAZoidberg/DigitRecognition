@@ -13,14 +13,20 @@ public class Network {
     private int layers;
     private RealMatrix[] weights;
     private RealMatrix[] biases;
+    int[] sizes;
 
     public Network(int[] sizes) {
         layers = sizes.length;
         biases = new RealMatrix[layers - 1];
         weights = new RealMatrix[layers - 1];
 		
+        // Initialize Weights and Biases
+        this.sizes = sizes;
+        initializeWeightsBiases();
+    }
+    
+    public void initializeWeightsBiases() {
         Random random = new Random();
-        // Initialize Weights
         for(int l = 0; l < layers - 1; l++) {
         	double[][] weightData = new double[sizes[l + 1]][sizes[l]];
         	for(int j = 0; j < sizes[l]; j++) {
@@ -30,15 +36,15 @@ public class Network {
         	}
         	weights[l] = MatrixUtils.createRealMatrix(weightData);
 
-        	double[][] biasData = new double[1][sizes[l + 1]];
+        	double[][] biasData = new double[sizes[l + 1]][1];
         	for(int i = 0; i < sizes[l + 1]; i++) {
-        		biasData[0][i] = random.nextGaussian();
+        		biasData[i][0] = random.nextGaussian();
         	}
-        	biases[l] = MatrixUtils.createRealMatrix(biasData).transpose();
+        	biases[l] = MatrixUtils.createRealMatrix(biasData);
         }
-    }
-    
-    public RealMatrix[][] getWeightsBiases() {
+	}
+
+	public RealMatrix[][] getWeightsBiases() {
     	RealMatrix[][] weightsBiases = {weights, biases};
     	return weightsBiases;
     }
@@ -93,7 +99,6 @@ public class Network {
     
     public int evaluate(RealMatrix[][] testDatas, RealMatrix[] ffWeights, RealMatrix[] ffBiases) {
 		int sumOfMatches = 0;
-		boolean whut = true;
 		for(RealMatrix[] testData : testDatas) {
 			RealMatrix testResult = feedForward(testData[0], ffWeights, ffBiases);
 			RealVector resultVector = testResult.getColumnVector(0);
@@ -103,10 +108,6 @@ public class Network {
 				sumOfMatches++;
 			}
 			//System.out.println("Actual: "  + resultInt + ", Desired: " + desiredInt + match);
-			if(whut) {
-				//System.out.println(testResult);
-				whut = false;
-			}
 		}
 		return sumOfMatches;
 	}
@@ -159,7 +160,7 @@ public class Network {
     		nablaW[l] = delta.multiply(a.transpose());
     	}
     	
-    	RealMatrix[][] nabla = {nablaW, nablaB}; 
+    	RealMatrix[][] nabla = {nablaW, nablaB};
     	return nabla;
     }
     

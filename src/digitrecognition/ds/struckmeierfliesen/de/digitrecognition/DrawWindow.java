@@ -10,7 +10,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
-public class DrawWindow implements KeyListener {
+public class DrawWindow {
     private BufferedImage canvasImage;
     
     private JPanel gui;
@@ -48,6 +48,8 @@ public class DrawWindow implements KeyListener {
             imageView.add(imageLabel);
             imageLabel.addMouseMotionListener(new ImageMouseMotionListener());
             imageLabel.addMouseListener(new ImageMouseListener());
+            imageLabel.setFocusable(true);
+            imageLabel.addKeyListener(new CanvasKeyListener());
             gui.add(imageScroll,BorderLayout.CENTER);
 
             JToolBar tb = new JToolBar();
@@ -69,6 +71,11 @@ public class DrawWindow implements KeyListener {
             };
             strokeSize.addChangeListener(strokeListener);
             strokeSize.setMaximumSize(strokeSize.getPreferredSize());
+            strokeSize.setFocusable(false);
+            Component[] comps = strokeSize.getEditor().getComponents();
+            for (Component component : comps) {
+                component.setFocusable(false);
+            }
             JLabel strokeLabel = new JLabel("Stroke");
             strokeLabel.setLabelFor(strokeSize);
             strokeLabel.setDisplayedMnemonic('t');
@@ -84,6 +91,7 @@ public class DrawWindow implements KeyListener {
                 }
             };
             JButton clearButton = new JButton("Clear");
+            clearButton.setFocusable(false);
             tb.add(clearButton);
             clearButton.addActionListener(clearListener);
 
@@ -141,16 +149,17 @@ public class DrawWindow implements KeyListener {
         public void mousePressed(MouseEvent arg0) {
 			if(arg0.getButton() == MouseEvent.BUTTON1) {
 				color = Color.BLACK;
+				draw(arg0.getPoint());
 			}else if(arg0.getButton() == MouseEvent.BUTTON3) {
 				color = Color.WHITE;
+				draw(arg0.getPoint());
 			}
-			draw(arg0.getPoint());
         }
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
 	        BufferedImage image = DrawWindow.this.canvasImage;
-			int[] guesses = Test.guessDigit(image);
+			int[] guesses = Test.guessDigit(image, 0);
 			guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
 		}
     }
@@ -164,23 +173,26 @@ public class DrawWindow implements KeyListener {
 
 		@Override
 		public void mouseMoved(MouseEvent arg0) {
-			// TODO Auto-generated method stub
 		}
 
     }
+    
+    class CanvasKeyListener implements KeyListener {
 
-	@Override
-	public void keyPressed(KeyEvent e) {
-	}
+    	@Override
+    	public void keyPressed(KeyEvent e) {
+    	}
 
-	@Override
-	public void keyReleased(KeyEvent e) {
-		//if(e.getKeyChar() == KeyEvent.VK_DOWN) {
-		//}
-	}
+    	@Override
+    	public void keyReleased(KeyEvent e) {
+    	}
 
-	@Override
-	public void keyTyped(KeyEvent e) {
-		System.out.println(e.getKeyChar());
-	}
+    	@Override
+    	public void keyTyped(KeyEvent e) {
+	        BufferedImage image = DrawWindow.this.canvasImage;
+    		ImageUtils.saveExample(e.getKeyChar(), image);
+    		clear(canvasImage);
+    	}
+    	
+    }
 }

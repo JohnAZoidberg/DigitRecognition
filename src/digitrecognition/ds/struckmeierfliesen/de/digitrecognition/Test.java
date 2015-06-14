@@ -34,24 +34,40 @@ public class Test {
 	public enum Mode {
 	    EVAL, TRAIN, DRAW 
 	}
-
-	static final Mode mode = Mode.EVAL;
+	// Hier kann man einstellen, ob das Netzwerk trainiert werden soll,
+	// ob man zeichen kann und dies dann klassifiziert wird oder ob ein
+	// paar handgeschriebene und eingescannte Ziffern klassifiziert werden sollen.
+	static final Mode mode = Mode.TRAIN;
+	
 	static String[] paths = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
 	static String[] testPaths = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};
 	Network net;
-	double oldAccuracy = 0d;
+	//double oldAccuracy = 0d;
 	
 	public Test() {
 		try {	
 			int[] sizes = {784, 30, 10};
 			net = new Network(sizes);
 			
-			Wrapper wrapper = loadNet("net.data");
-			RealMatrix[] weights = wrapper.geWeights();
-			RealMatrix[] biases = wrapper.getBiases();
-			oldAccuracy = wrapper.getAccuracy();
+			RealMatrix[][] weightsBiases = loadJSONNet();
+			RealMatrix[] weights = weightsBiases[0];
+			RealMatrix[] biases = weightsBiases[1];
 			net.setWeightsBiases(weights, biases);
-		} catch (ClassNotFoundException | IOException e) {
+			
+			String weightJson = jsonize(weights);
+			String biasJson = jsonize(biases);
+			double[][][] weightDoubles = dejsonize(weightJson);
+			weights = new RealMatrix[3];
+			for(int i = 0; i < weightDoubles.length; i++) {
+				weights[i] = MatrixUtils.createRealMatrix(weightDoubles[i]);
+			}
+			double[][][] biasDoubles = dejsonize(biasJson);
+			biases = new RealMatrix[3];
+			for(int i = 0; i < biasDoubles.length; i++) {
+				biases[i] = MatrixUtils.createRealMatrix(biasDoubles[i]);
+			}
+			net.setWeightsBiases(weights, biases);
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -96,56 +112,29 @@ public class Test {
 	}
 	
 	public void evaluateCustomData() {
-		try {
-			RealMatrix[][] trainingData = ImageUtils.loadCustomTrainingData();
-			RealMatrix[][] testData = importMNIST(paths, 0, 10000);
-			
-			int[] sizes = {784, 30, 10};
-			Network net = new Network(sizes);
-			
-			RealMatrix[][] weightsBiases = loadJSONNet();
-			RealMatrix[] weights = weightsBiases[0];
-			RealMatrix[] biases = weightsBiases[1];
-			net.setWeightsBiases(weights, biases);
-			
-			String weightJson = jsonize(weights);
-			String biasJson = jsonize(biases);
-			double[][][] weightDoubles = dejsonize(weightJson);
-			weights = new RealMatrix[3];
-			for(int i = 0; i < weightDoubles.length; i++) {
-				weights[i] = MatrixUtils.createRealMatrix(weightDoubles[i]);
-			}
-			double[][][] biasDoubles = dejsonize(biasJson);
-			biases = new RealMatrix[3];
-			for(int i = 0; i < biasDoubles.length; i++) {
-				biases[i] = MatrixUtils.createRealMatrix(biasDoubles[i]);
-			}
-			net.setWeightsBiases(weights, biases);
-			
-			
-			
-			int hits = net.evaluate(testData, null, null);
-			double accuracy = (((double) hits) / testData.length) * 100.0;
-			System.out.println(hits + " / " + testData.length + "  " + accuracy + "%");
-			
-			hits = net.evaluate(trainingData, null, null);
-			accuracy = (((double) hits) / trainingData.length) * 100.0;
-			System.out.println(hits + " / " + trainingData.length + "  " + accuracy + "%");
+		RealMatrix[][] trainingData = ImageUtils.loadCustomTrainingData();
+		RealMatrix[][] testData = importMNIST(paths, 0, 10000);			
+		
+		int hits = net.evaluate(testData, null, null);
+		double accuracy = (((double) hits) / testData.length) * 100.0;
+		System.out.println(hits + " / " + testData.length + "  " + accuracy + "%");
+		
+		hits = net.evaluate(trainingData, null, null);
+		accuracy = (((double) hits) / trainingData.length) * 100.0;
+		System.out.println(hits + " / " + trainingData.length + "  " + accuracy + "%");
 
-			accuracy = net.sgd(trainingData, 10, 10, 0.005, testData);
-			System.out.println("Final Accuracy: " + accuracy + "%");
-			
-			hits = net.evaluate(trainingData, null, null);
-			accuracy = (((double) hits) / trainingData.length) * 100.0;
-			System.out.println(hits + " / " + trainingData.length + "  " + accuracy + "%");
-			//RealMatrix[][] weightBiases = net.getWeightsBiases();
-			//saveJSONNet(weightBiases[0], weightBiases[1]);
-		} catch (IOException  e) {
-			e.printStackTrace();
-		}
+		accuracy = net.sgd(trainingData, 10, 10, 0.005, testData);
+		System.out.println("Final Accuracy: " + accuracy + "%");
+		
+		hits = net.evaluate(trainingData, null, null);
+		accuracy = (((double) hits) / trainingData.length) * 100.0;
+		System.out.println(hits + " / " + trainingData.length + "  " + accuracy + "%");
+		//RealMatrix[][] weightBiases = net.getWeightsBiases();
+		//saveJSONNet(weightBiases[0], weightBiases[1]);
 	}
 	
 	public void train() throws IOException {
+		
 		//displayMemoryStats();
 		/*int datasetSize = 600;
 		RealMatrix[][] data = importMNIST(paths, 0, datasetSize);
@@ -154,8 +143,11 @@ public class Test {
 		RealMatrix[][] testData = new RealMatrix[(int) (length * 0.1)][];
 		System.arraycopy(data, 0, trainingData, 0, trainingData.length);
 		System.arraycopy(data, trainingData.length, testData, 0, testData.length);*/
-		RealMatrix[][] trainingData = importMNIST(paths, 0, 1000);
-		RealMatrix[][] testData = importMNIST(testPaths, 0, 100);
+		RealMatrix[][] trainingData = importMNIST(paths, 0, 5000);
+		RealMatrix[][] testData = importMNIST(testPaths, 0, 1000);
+		
+		int hits = net.evaluate(testData, null, null);
+		double oldAccuracy = (((double) hits) / testData.length) * 100.0;
 
 		int testNumber = (int)(Math.random() * 100);
 		RealMatrix[] img = testData[testNumber];
@@ -335,7 +327,7 @@ public class Test {
 		return guesses;
 	}
     
-    public static int[] guessDigit(BufferedImage image, int number) {
+    public int[] guessDigit(BufferedImage image, int number) {
         image = ImageUtils.getCroppedImage(image, 0);
         image = ImageUtils.resizeRatio(image, 20, 20);
         //System.out.println("Height: " + image.getHeight() + ", width: " + image.getWidth());
@@ -343,8 +335,7 @@ public class Test {
        
         RealMatrix[] data = ImageUtils.bufferedImageToRealMatrix(image, number);
 		
-		Test test = new Test();
-		return test.guessDigit(data);
+		return guessDigit(data);
 	}
 	
 	private static void displayImage(RealMatrix[] example, boolean closeOld) {

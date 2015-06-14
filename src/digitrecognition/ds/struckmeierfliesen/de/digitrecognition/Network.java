@@ -75,7 +75,6 @@ public class Network {
     }
     
     public double sgd(RealMatrix[][] trainingData, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
-    	//int n = trainingData[0].getRowDimension();
     	double accuracy = 0.0;
     	for(int i = 0; i < epochs; i++) {
     		int trainingSize = trainingData.length;
@@ -107,7 +106,6 @@ public class Network {
 			if(resultInt == desiredInt) {
 				sumOfMatches++;
 			}
-			//System.out.println("Actual: "  + resultInt + ", Desired: " + desiredInt + match);
 		}
 		return sumOfMatches;
 	}
@@ -226,7 +224,6 @@ public class Network {
 		Random rnd = new Random();
 		for (int i = ar.length - 1; i > 0; i--) {
 			int index = rnd.nextInt(i + 1);
-			// Simple swap
 			RealMatrix[] a = ar[index];
 			ar[index] = ar[i];
 			ar[i] = a;

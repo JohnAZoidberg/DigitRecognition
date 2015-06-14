@@ -11,6 +11,7 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 
 public class DrawWindow {
+	private Test test;
     private BufferedImage canvasImage;
     
     private JPanel gui;
@@ -27,7 +28,9 @@ public class DrawWindow {
     private Stroke stroke = new BasicStroke(DEFAULT_STROKE_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.7f);
     private RenderingHints renderingHints;
 
-    
+    public DrawWindow() {
+    	test = new Test();
+    }
     
     public JComponent getGui() {
         if(gui == null) {
@@ -159,7 +162,7 @@ public class DrawWindow {
 		@Override
 		public void mouseReleased(MouseEvent e) {
 	        BufferedImage image = DrawWindow.this.canvasImage;
-			int[] guesses = Test.guessDigit(image, 0);
+			int[] guesses = test.guessDigit(image, 0);
 			guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
 		}
     }

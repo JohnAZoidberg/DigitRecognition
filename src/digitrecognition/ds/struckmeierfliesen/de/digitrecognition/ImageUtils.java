@@ -22,7 +22,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 public class ImageUtils {
 
 	public static JFrame displayedFrame = null;
-    
+
     public static BufferedImage resizeRatio(BufferedImage img, int maxW, int maxH) {
     	double oldH = (double) img.getHeight();
     	double oldW = (double) img.getWidth();
@@ -35,8 +35,8 @@ public class ImageUtils {
     	}
     	return resize(img, (int) newW, (int) newH);
     }
-    
-    public static BufferedImage resize(BufferedImage img, int newW, int newH) { 
+
+    public static BufferedImage resize(BufferedImage img, int newW, int newH) {
         Image tmp = img.getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
         BufferedImage dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
 
@@ -46,7 +46,7 @@ public class ImageUtils {
 
         return dimg;
     }
-    
+
     public static BufferedImage getCroppedImage(BufferedImage source, double tolerance) {
 	   // Get our top-left pixel color as our "baseline" for cropping
 	   int baseColor = source.getRGB(0, 0);
@@ -56,7 +56,7 @@ public class ImageUtils {
 
 	   int topY = Integer.MAX_VALUE;
 	   int topX = Integer.MAX_VALUE;
-	   
+
 	   int bottomY = -1, bottomX = -1;
 	   for(int y=0; y<height; y++) {
 	      for(int x=0; x<width; x++) {
@@ -71,13 +71,13 @@ public class ImageUtils {
 
 	   BufferedImage destination = new BufferedImage((bottomX-topX+1), (bottomY-topY+1), BufferedImage.TYPE_INT_ARGB);
 
-	   destination.getGraphics().drawImage(source, 0, 0, 
-	               destination.getWidth(), destination.getHeight(), 
+	   destination.getGraphics().drawImage(source, 0, 0,
+	               destination.getWidth(), destination.getHeight(),
 	               topX, topY, bottomX, bottomY, null);
 
 	   return destination;
 	}
-    
+
     public static boolean colorWithinTolerance(int a, int b, double tolerance) {
 	    int aAlpha  = (int)((a & 0xFF000000) >>> 24);   // Alpha level
 	    int aRed    = (int)((a & 0x00FF0000) >>> 16);   // Red level
@@ -94,13 +94,13 @@ public class ImageUtils {
 	                                (aGreen-bGreen)*(aGreen-bGreen) +
 	                                (aBlue-bBlue)*(aBlue-bBlue));
 
-	    // 510.0 is the maximum distance between two colors 
+	    // 510.0 is the maximum distance between two colors
 	    // (0,0,0,0 -> 255,255,255,255)
-	    double percentAway = distance / 510.0d;     
+	    double percentAway = distance / 510.0d;
 
 	    return (percentAway > tolerance);
 	}
-	
+
 	public static BufferedImage embedWithWhiteBackground(BufferedImage image) {
         BufferedImage square = new BufferedImage(28, 28, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = square.createGraphics();
@@ -109,8 +109,8 @@ public class ImageUtils {
         image = ImageUtils.layerImages(square, image);
         return image;
 	}
-	
-	
+
+
 	// Image1 is bigger and is the background
 	public static BufferedImage layerImages(BufferedImage background, BufferedImage foreground) {
 		int width1 = background.getWidth();
@@ -132,8 +132,8 @@ public class ImageUtils {
 		g.drawImage(foreground, paddingLeft, paddingTop, null);
 		return c;
 	}
-	
-	public static void displayImage(BufferedImage image, int nr, boolean closeOld) {		
+
+	public static void displayImage(BufferedImage image, int nr, boolean closeOld) {
 		if(closeOld && displayedFrame != null) displayedFrame.dispose();
 		displayedFrame = new JFrame("Handwritten " + nr);
 		if(nr == -2) displayedFrame.setFocusableWindowState(false);
@@ -143,7 +143,7 @@ public class ImageUtils {
 		displayedFrame.setSize(image.getWidth() + 10, image.getHeight() + 10);
 		displayedFrame.setVisible(true);
 	}
-	
+
 	public static BufferedImage getImageFromArray(int[] pixels, int width, int height) {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         WritableRaster raster = (WritableRaster) image.getData();
@@ -151,7 +151,7 @@ public class ImageUtils {
         image.setData(raster);
         return image;
     }
-	
+
 	public static int[] centerOfMass(BufferedImage image) {
 		double cogX = 0;
 		double cogY = 0;
@@ -163,7 +163,7 @@ public class ImageUtils {
 	        	int g = (rgb >> 8) & 0xFF;
 	        	int b = (rgb & 0xFF);
 				double i = ((double) (r + g + b)) / 3.0;
-				cogX = cogX + (i * x); 
+				cogX = cogX + (i * x);
 				cogY = cogY + (i * y);
 				total = total + i;
 			}
@@ -183,7 +183,7 @@ public class ImageUtils {
 	        image = ImageUtils.getCroppedImage(image, 0);
 	        image = ImageUtils.resizeRatio(image, 20, 20);
 	        image = ImageUtils.embedWithWhiteBackground(image);
-			
+
 			image = joinBufferedImage(image, savedImage, keyChar);
 			ImageIO.write(image, "png", imageFile);
 			displayImage(image, -1, true);
@@ -211,7 +211,7 @@ public class ImageUtils {
         g2.dispose();
         return mergedImage;
     }
-    
+
     public static RealMatrix[][] loadCustomTrainingData() {
     	ArrayList<RealMatrix[]> arrayData = new ArrayList<RealMatrix[]>();
     	for(int i = 0; i < 10; i++) {
@@ -232,26 +232,26 @@ public class ImageUtils {
     	}
     	return data;
     }
-    
+
     public static BufferedImage[] splitImage(BufferedImage image, int colWidth) {
-    	int rows = 1; //You should decide the values for rows and cols variables  
-        int cols = image.getWidth() / colWidth;  
+    	int rows = 1; //You should decide the values for rows and cols variables
+        int cols = image.getWidth() / colWidth;
         int chunks = rows * cols;
-  
-        int chunkWidth = image.getWidth() / cols; // determines the chunk width and height  
-        int chunkHeight = image.getHeight() / rows;  
-        int count = 0;  
-        BufferedImage images[] = new BufferedImage[chunks]; //Image array to hold image chunks  
-        for (int x = 0; x < rows; x++) {  
-            for (int y = 0; y < cols; y++) {  
-                //Initialize the image array with image chunks  
-            	images[count] = new BufferedImage(chunkWidth, chunkHeight, image.getType());  
-  
-                // draws the image chunk  
-                Graphics2D gr = images[count++].createGraphics();  
-                gr.drawImage(image, 0, 0, chunkWidth, chunkHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + chunkWidth, chunkHeight * x + chunkHeight, null);  
-                gr.dispose();  
-            }  
+
+        int chunkWidth = image.getWidth() / cols; // determines the chunk width and height
+        int chunkHeight = image.getHeight() / rows;
+        int count = 0;
+        BufferedImage images[] = new BufferedImage[chunks]; //Image array to hold image chunks
+        for (int x = 0; x < rows; x++) {
+            for (int y = 0; y < cols; y++) {
+                //Initialize the image array with image chunks
+            	images[count] = new BufferedImage(chunkWidth, chunkHeight, image.getType());
+
+                // draws the image chunk
+                Graphics2D gr = images[count++].createGraphics();
+                gr.drawImage(image, 0, 0, chunkWidth, chunkHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + chunkWidth, chunkHeight * x + chunkHeight, null);
+                gr.dispose();
+            }
         }
     	return images;
     }
@@ -261,7 +261,7 @@ public class ImageUtils {
 		double[][] grayData = new double[784][1];
 		int numCols = image.getWidth();
 		int numRows = image.getHeight();
-		
+
 		int i = 0;
 		for (int colIdx = 0; colIdx < numCols; colIdx++) {
 			for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
@@ -285,7 +285,7 @@ public class ImageUtils {
 		double[][] grayData = new double[784][1];
 		int numCols = image.getWidth();
 		int numRows = image.getHeight();
-		
+
 		int i = 0;
 		for (int colIdx = 0; colIdx < numCols; colIdx++) {
 			for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {

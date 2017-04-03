@@ -19,12 +19,12 @@ public class Network {
         layers = sizes.length;
         biases = new RealMatrix[layers - 1];
         weights = new RealMatrix[layers - 1];
-		
+
         // Initialize Weights and Biases
         this.sizes = sizes;
         initializeWeightsBiases();
     }
-    
+
     public void initializeWeightsBiases() {
         Random random = new Random();
         for(int l = 0; l < layers - 1; l++) {
@@ -48,12 +48,12 @@ public class Network {
     	RealMatrix[][] weightsBiases = {weights, biases};
     	return weightsBiases;
     }
-    
+
     public void setWeightsBiases(RealMatrix[] weights, RealMatrix[] biases) {
     	this.weights = weights;
     	this.biases = biases;
     }
-    
+
     public double sgd(int trainingSize, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
     	double accuracy = 0.0;
     	for(int i = 0; i < epochs; i++) {
@@ -73,7 +73,7 @@ public class Network {
     	}
     	return accuracy;
     }
-    
+
     public double sgd(RealMatrix[][] trainingData, int epochs, int miniBatchSize, double eta, RealMatrix[][] testData) {
     	double accuracy = 0.0;
     	for(int i = 0; i < epochs; i++) {
@@ -83,7 +83,7 @@ public class Network {
         		RealMatrix[][] miniBatch = Arrays.copyOfRange(trainingData, j, j + miniBatchSize - 1);
         		updateMiniBatch(miniBatch, eta);
     		}
-    		
+
     		if(testData != null) {
     			int hits = evaluate(testData, null, null);
     			accuracy = (((double) hits) / testData.length) * 100.0;
@@ -95,7 +95,7 @@ public class Network {
     	}
     	return accuracy;
     }
-    
+
     public int evaluate(RealMatrix[][] testDatas, RealMatrix[] ffWeights, RealMatrix[] ffBiases) {
 		int sumOfMatches = 0;
 		for(RealMatrix[] testData : testDatas) {
@@ -116,24 +116,24 @@ public class Network {
 	    	RealMatrix[][] nabla = backpropagate(data[0], data[1]);
 	    	RealMatrix[] nablaW = nabla[0];
 	    	RealMatrix[] nablaB = nabla[1];
-	    	
+
 	    	for(int l = 0; l < layers - 1; l++) {
 	    		weights[l] = weights[l].subtract(nablaW[l].scalarMultiply(eta / ((double) data.length)));
 	    		biases[l] = biases[l].subtract(nablaB[l].scalarMultiply(eta / ((double) data.length)));
 	    	}
 		}
     }
-    
+
     private RealMatrix[][] backpropagate(RealMatrix activation, RealMatrix y) {
     	int last = layers - 1 - 1;
     	RealMatrix inputActivation = activation;
-    	
+
     	RealMatrix[] activations = new RealMatrix[layers - 1];
     	RealMatrix[] zs = new RealMatrix[layers - 1];
     	// nablaW and nablaB are the gradients of the weights and biases
     	RealMatrix[] nablaW = new RealMatrix[layers - 1];
     	RealMatrix[] nablaB = new RealMatrix[layers - 1];
-    	
+
     	// Feedforward
     	for(int l = 0; l < layers - 1; l++) {
     		RealMatrix w = weights[l];
@@ -143,7 +143,7 @@ public class Network {
     		activation = sigmoidVectorized(z);
     		activations[l] = activation;
     	}
-    	
+
     	// Backward pass
     	RealMatrix delta = hadamard(costDerivative(activations[last], y), sigmoidPrimeVectorized(zs[last]));
     	nablaB[last] = delta;
@@ -157,16 +157,16 @@ public class Network {
     		if(l > 0) a = activations[l - 1];
     		nablaW[l] = delta.multiply(a.transpose());
     	}
-    	
+
     	RealMatrix[][] nabla = {nablaW, nablaB};
     	return nabla;
     }
-    
+
     public RealMatrix feedForward(RealMatrix activations, RealMatrix[] ffWeights, RealMatrix[] ffBiases) {
 
 		if(ffWeights == null) ffWeights = weights;
 		if(ffBiases == null) ffBiases = biases;
-			
+
     	for(int i = 0; i < layers - 1; i++) {
     		RealMatrix weight = ffWeights[i];
     		RealMatrix z = weight.multiply(activations);
@@ -176,7 +176,7 @@ public class Network {
     	}
     	return activations;
     }
-    
+
     private RealMatrix hadamard(RealMatrix x, RealMatrix y) {
     	if(x.getRowDimension() != y.getRowDimension() || x.getColumnDimension() != y.getColumnDimension()) ;
     	int columns = x.getColumnDimension();
@@ -190,15 +190,15 @@ public class Network {
     	}
     	return result;
     }
-    
+
     private RealMatrix costDerivative(RealMatrix outputActivations, RealMatrix y) {
     	return outputActivations.subtract(y);
     }
-    
+
     private double sigmoid(double x) {
     	return 1.0 / (1.0 + Math.exp(-x));
     }
-    
+
     private RealMatrix sigmoidVectorized(RealMatrix x) {
     	double[][] array = x.getData();
     	for(int i = 0; i < array.length; i++) {
@@ -206,11 +206,11 @@ public class Network {
     	}
     	return MatrixUtils.createRealMatrix(array);
     }
-    
+
     private double sigmoidPrime(double x) {
     	return sigmoid(x) * (1 - sigmoid(x));
     }
-    
+
     private RealMatrix sigmoidPrimeVectorized(RealMatrix x) {
     	double[][] array = x.getData();
     	for(int i = 0; i < array.length; i++) {
@@ -218,9 +218,9 @@ public class Network {
     	}
     	return MatrixUtils.createRealMatrix(array);
     }
- 
+
     // Implementing Fisher–Yates shuffle
-    public static RealMatrix[][] shuffleArray(RealMatrix[][] ar) {    	
+    public static RealMatrix[][] shuffleArray(RealMatrix[][] ar) {
 		Random rnd = new Random();
 		for (int i = ar.length - 1; i > 0; i--) {
 			int index = rnd.nextInt(i + 1);

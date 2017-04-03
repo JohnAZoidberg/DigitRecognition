@@ -30,30 +30,30 @@ import com.google.gson.*;
  */
 
 public class Test {
-	
+
 	public enum Mode {
-	    EVAL, TRAIN, DRAW 
+	    EVAL, TRAIN, DRAW
 	}
 	// Hier kann man einstellen, ob das Netzwerk trainiert werden soll,
 	// ob man zeichen kann und dies dann klassifiziert wird oder ob ein
 	// paar handgeschriebene und eingescannte Ziffern klassifiziert werden sollen.
 	static final Mode mode = Mode.TRAIN;
-	
+
 	static String[] paths = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
 	static String[] testPaths = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};
 	Network net;
 	//double oldAccuracy = 0d;
-	
+
 	public Test() {
-		try {	
+		try {
 			int[] sizes = {784, 30, 10};
 			net = new Network(sizes);
-			
+
 			RealMatrix[][] weightsBiases = loadJSONNet();
 			RealMatrix[] weights = weightsBiases[0];
 			RealMatrix[] biases = weightsBiases[1];
 			net.setWeightsBiases(weights, biases);
-			
+
 			String weightJson = jsonize(weights);
 			String biasJson = jsonize(biases);
 			double[][][] weightDoubles = dejsonize(weightJson);
@@ -72,7 +72,7 @@ public class Test {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void main(String[] args) throws IOException {
 		Test test;
 		switch(mode) {
@@ -110,31 +110,31 @@ public class Test {
 			break;
 		}
 	}
-	
+
 	public void evaluateCustomData() {
 		RealMatrix[][] trainingData = ImageUtils.loadCustomTrainingData();
-		RealMatrix[][] testData = importMNIST(paths, 0, 10000);			
-		
+		RealMatrix[][] testData = importMNIST(paths, 0, 10000);
+
 		int hits = net.evaluate(testData, null, null);
 		double accuracy = (((double) hits) / testData.length) * 100.0;
 		System.out.println(hits + " / " + testData.length + "  " + accuracy + "%");
-		
+
 		hits = net.evaluate(trainingData, null, null);
 		accuracy = (((double) hits) / trainingData.length) * 100.0;
 		System.out.println(hits + " / " + trainingData.length + "  " + accuracy + "%");
 
 		accuracy = net.sgd(trainingData, 10, 10, 0.005, testData);
 		System.out.println("Final Accuracy: " + accuracy + "%");
-		
+
 		hits = net.evaluate(trainingData, null, null);
 		accuracy = (((double) hits) / trainingData.length) * 100.0;
 		System.out.println(hits + " / " + trainingData.length + "  " + accuracy + "%");
 		//RealMatrix[][] weightBiases = net.getWeightsBiases();
 		//saveJSONNet(weightBiases[0], weightBiases[1]);
 	}
-	
+
 	public void train() throws IOException {
-		
+
 		//displayMemoryStats();
 		/*int datasetSize = 600;
 		RealMatrix[][] data = importMNIST(paths, 0, datasetSize);
@@ -145,7 +145,7 @@ public class Test {
 		System.arraycopy(data, trainingData.length, testData, 0, testData.length);*/
 		RealMatrix[][] trainingData = importMNIST(paths, 0, 5000);
 		RealMatrix[][] testData = importMNIST(testPaths, 0, 1000);
-		
+
 		int hits = net.evaluate(testData, null, null);
 		double oldAccuracy = (((double) hits) / testData.length) * 100.0;
 
@@ -159,7 +159,7 @@ public class Test {
 		RealMatrix trainedOutput = net.feedForward(img[0], null, null);
 		System.out.println("Trained Output: " + trainedOutput.getColumnVector(0).getMaxIndex());
 		System.out.println(trainedOutput);
-		// reset weights and biases to random values 
+		// reset weights and biases to random values
 		net.initializeWeightsBiases();
 		double accuracy = net.sgd(trainingData, 10, 10, 3.0, testData);
 		System.out.println("Final Accuracy: " + accuracy + "%");
@@ -168,12 +168,12 @@ public class Test {
 			saveNet(weightBiases[0], weightBiases[1], accuracy);
 		}*/
 	}
-	
+
 	public static String readFile(String path, Charset encoding) throws IOException {
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return new String(encoded, encoding);
 	}
-	
+
 	public void saveJSONNet(RealMatrix[] weights, RealMatrix[] biases) {
 		String weightsJSON = jsonize(weights);
 		String biasesJSON = jsonize(biases);
@@ -186,7 +186,7 @@ public class Test {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static String jsonize(RealMatrix[] matrices) {
 		String output = "[";
 	    boolean first = true;
@@ -206,13 +206,13 @@ public class Test {
 	        	output += ",";
 	        first = true;
 	        output += "[";
-	        
+
 	        for(double[] row : layer) {
 	            if(first == false)
 	                output+= ",";
 	            first = true;
 	            output += "[";
-	            
+
 	            for(double element : row) {
 	                if(!first)
 	                    output += ",";
@@ -226,15 +226,15 @@ public class Test {
 	    output += "]";
 	    return output;
 	}
-	
+
 	public static double[][][] dejsonize(String input) {
 		Gson gson = new Gson();
 		double[][][] data = gson.fromJson(input, double[][][].class);
 		return data;
 	}
-	
+
 	public Test(RealMatrix[] checkImage) {
-		try {			
+		try {
 			int datasetSize = 10000;
 			/*RealMatrix[][] data = importMNIST(args, 0, datasetSize);
 			double length = (double) data.length;
@@ -243,10 +243,10 @@ public class Test {
 			System.arraycopy(data, 0, trainingData, 0, trainingData.length);
 			System.arraycopy(data, trainingData.length, testData, 0, testData.length);*/
 			//RealMatrix[][] trainingData = importMNIST(args, 0, 900);
-			
+
 			int[] sizes = {784, 30, 10};
 			Network net = new Network(sizes);
-			
+
 			Wrapper wrapper = loadNet("net.data");
 			RealMatrix[] weights = wrapper.geWeights();
 			RealMatrix[] biases = wrapper.getBiases();
@@ -289,7 +289,7 @@ public class Test {
 					System.out.println("Trained Output: " + trainedOutput.getColumnVector(0).getMaxIndex());
 					System.out.println(trainedOutput);
 				}
-				
+
 				/*System.out.println();
 				testNumber = (int)(Math.random() * 100);
 				img = testData[testNumber];
@@ -312,7 +312,7 @@ public class Test {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public int[] guessDigit(RealMatrix[] checkImage) {
 		RealMatrix trainedOutput = net.feedForward(checkImage[0], null, null);
 		//System.out.println(trainedOutput);
@@ -326,31 +326,31 @@ public class Test {
 		displayImage(checkImage, true);
 		return guesses;
 	}
-    
+
     public int[] guessDigit(BufferedImage image, int number) {
         image = ImageUtils.getCroppedImage(image, 0);
         image = ImageUtils.resizeRatio(image, 20, 20);
         //System.out.println("Height: " + image.getHeight() + ", width: " + image.getWidth());
         image = ImageUtils.embedWithWhiteBackground(image);
-       
+
         RealMatrix[] data = ImageUtils.bufferedImageToRealMatrix(image, number);
-		
+
 		return guessDigit(data);
 	}
-	
+
 	private static void displayImage(RealMatrix[] example, boolean closeOld) {
 		RealMatrix vectorMatrix = example[0];
 		int[] buffer = new int[784];
 		for(int row = 0; row < 784; row++) {
 			buffer[row] = 255 - (int) (vectorMatrix.getEntry(row, 0) * 255);
 		}
-		
+
 		int VERTICAL_PIXELS = 28;
 		int HORIZONTAL_PIXELS = VERTICAL_PIXELS;
 		BufferedImage image = ImageUtils.getImageFromArray(buffer, VERTICAL_PIXELS, HORIZONTAL_PIXELS);
-		
+
 		image = ImageUtils.resize(image, 280, 280);
-		
+
 		ImageUtils.displayImage(image, example[1].getColumnVector(0).getMaxIndex(), closeOld);
 	}
 
@@ -383,7 +383,7 @@ public class Test {
 		double[][] grayData = new double[784][1];
 		int numCols = image.getWidth();
 		int numRows = image.getHeight();
-		
+
 		int i = 0;
 		for (int colIdx = 0; colIdx < numCols; colIdx++) {
 			for (int rowIdx = 0; rowIdx < numRows; rowIdx++) {
@@ -399,7 +399,7 @@ public class Test {
 		data[1] = vectorizeSolution((byte) number);
 		return data;
 	}*/
-	
+
 	private Wrapper loadNet(String path) throws IOException, ClassNotFoundException {
 		Wrapper net = null;
 		// Read from disk using FileInputStream
@@ -412,15 +412,15 @@ public class Test {
 		if (obj instanceof Wrapper)
 		{
 			net = (Wrapper) obj;
-			
+
 		}
 		return net;
 	}
-	
+
 	private RealMatrix[][] loadJSONNet() throws IOException {
 		String weightJson = readStringFile("weights.txt");
 		String biasJson = readStringFile("biases.txt");
-		
+
 		double[][][] weightDoubles = dejsonize(weightJson);
 		RealMatrix[] weights = new RealMatrix[2];
 		for(int i = 0; i < weightDoubles.length; i++) {
@@ -443,7 +443,7 @@ public class Test {
 
 	/*private void saveNet(RealMatrix[] weights, RealMatrix[] biases, double accuracy) throws IOException {
 		Wrapper net = new Wrapper(weights, biases, accuracy);
-		
+
 		// Write to disk with FileOutputStream
 		FileOutputStream f_out = new FileOutputStream("net.data");
 		// Write object with ObjectOutputStream
@@ -473,7 +473,7 @@ public class Test {
 		}
 		return trainingData;
 	}*/
-	
+
 	/**
 	   * @param args
 	   *          args[0]: label file; args[1]: data file.
@@ -504,7 +504,7 @@ public class Test {
 				System.err.println("  Image file contains: " + numImages);
 				System.exit(0);
 			}
-			
+
 			long start = System.currentTimeMillis();
 			int numLabelsRead = 0;
 			int numImagesRead = 0;
@@ -538,7 +538,7 @@ public class Test {
 			}
 			labels.close();
 			images.close();
-			
+
 			long end = System.currentTimeMillis();
 			long elapsed = end - start;
 			long minutes = elapsed / (1000 * 60);
@@ -549,19 +549,19 @@ public class Test {
 		}
 		return data;
 	}
-	
+
 	public static RealMatrix vectorizeSolution(byte number) {
 		RealMatrix matrix = MatrixUtils.createRealMatrix(10, 1);
 		matrix.setEntry(number, 0, 1);
 		return matrix;
 	}
-	
+
 	public static double[][] arraycizeSolution(byte number) {
 		double[][] array = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 		array[0][number] = 1;
 		return array;
 	}
-	
+
 	/**
 	   * @param args
 	   *          args[0]: label file; args[1]: data file.
@@ -594,7 +594,7 @@ public class Test {
 				System.err.println("  Image file contains: " + numImages);
 				System.exit(0);
 			}
-			
+
 			long start = System.currentTimeMillis();
 			int numLabelsRead = 0;
 			int numImagesRead = 0;
@@ -643,7 +643,7 @@ public class Test {
 			    long seconds = (elapsed / 1000) - (minutes * 60);
 			    //System.out.println("  " + minutes + " m " + seconds + " s ");
 			}
-			
+
 			//System.out.println();
 			long end = System.currentTimeMillis();
 			long elapsed = end - start;
@@ -655,15 +655,15 @@ public class Test {
 		}
 		return data;
 	}
-	
+
 	private static void displayMemoryStats() {
 	       int mb = 1024*1024;
-	        
+
 	       //Getting the runtime reference from system
 	       Runtime runtime = Runtime.getRuntime();
-	        
+
 	       System.out.println("##### Heap utilization statistics [MB] #####");
-	        
+
 	       //Print used memory
 	       System.out.println("Used Memory:"
 	           + (runtime.totalMemory() - runtime.freeMemory()) / mb);
@@ -671,7 +671,7 @@ public class Test {
 	       //Print free memory
 	       System.out.println("Free Memory:"
 	           + runtime.freeMemory() / mb);
-	        
+
 	       //Print total available memory
 	       System.out.println("Total Memory:" + runtime.totalMemory() / mb);
 

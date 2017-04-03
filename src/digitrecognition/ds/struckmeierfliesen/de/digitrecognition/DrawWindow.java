@@ -13,32 +13,32 @@ import javax.swing.event.*;
 public class DrawWindow {
 	private Test test;
     private BufferedImage canvasImage;
-    
+
     private JPanel gui;
-    
+
     // Drawing color
     private Color color = Color.BLACK;
 
     private JLabel imageLabel;
     private JLabel guessLabel;
-    
+
     public final int SIZE = 280;
     public final int DEFAULT_STROKE_SIZE = 30;
-    
+
     private Stroke stroke = new BasicStroke(DEFAULT_STROKE_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.7f);
     private RenderingHints renderingHints;
 
     public DrawWindow() {
     	test = new Test();
     }
-    
+
     public JComponent getGui() {
         if(gui == null) {
             Map<Key, Object> hintsMap = new HashMap<RenderingHints.Key,Object>();
             hintsMap.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             hintsMap.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
             hintsMap.put(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            renderingHints = new RenderingHints(hintsMap); 
+            renderingHints = new RenderingHints(hintsMap);
 
             setImage(new BufferedImage(SIZE,SIZE,BufferedImage.TYPE_INT_RGB));
             gui = new JPanel(new BorderLayout(4,4));
@@ -64,7 +64,7 @@ public class DrawWindow {
                 @Override
                 public void stateChanged(ChangeEvent arg0) {
                     Object o = strokeModel.getValue();
-                    Integer i = (Integer)o; 
+                    Integer i = (Integer)o;
                     stroke = new BasicStroke(
                             i.intValue(),
                             BasicStroke.CAP_ROUND,
@@ -100,9 +100,9 @@ public class DrawWindow {
 
             guessLabel = new JLabel("");
             tb.add(guessLabel);
-            
+
             gui.add(tb, BorderLayout.PAGE_START);
-            
+
             clear(canvasImage);
         }
 
@@ -179,7 +179,7 @@ public class DrawWindow {
 		}
 
     }
-    
+
     class CanvasKeyListener implements KeyListener {
 
     	@Override
@@ -196,6 +196,6 @@ public class DrawWindow {
     		ImageUtils.saveExample(e.getKeyChar(), image);
     		clear(canvasImage);
     	}
-    	
+
     }
 }

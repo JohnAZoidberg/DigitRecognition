@@ -1,4 +1,4 @@
-package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
+package me.danielschaefer.digitrecognition;
 
 import java.awt.image.*;
 import java.io.BufferedReader;
@@ -37,7 +37,7 @@ public class Test {
 	// Hier kann man einstellen, ob das Netzwerk trainiert werden soll,
 	// ob man zeichen kann und dies dann klassifiziert wird oder ob ein
 	// paar handgeschriebene und eingescannte Ziffern klassifiziert werden sollen.
-	static final Mode mode = Mode.TRAIN;
+	static final Mode mode = Mode.DRAW;
 
 	static String[] paths = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
 	static String[] testPaths = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};

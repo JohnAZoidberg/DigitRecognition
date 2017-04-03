@@ -1,4 +1,4 @@
-package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
+package me.danielschaefer.digitrecognition;
 
 import java.awt.*;
 import java.awt.RenderingHints.Key;

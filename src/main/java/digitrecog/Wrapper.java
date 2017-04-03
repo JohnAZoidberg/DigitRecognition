@@ -1,4 +1,4 @@
-package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
+package me.danielschaefer.digitrecognition;
 
 import java.io.Serializable;
 import org.apache.commons.math3.linear.RealMatrix;

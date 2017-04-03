@@ -1,4 +1,4 @@
-package digitrecognition.ds.struckmeierfliesen.de.digitrecognition;
+package me.danielschaefer.digitrecognition;
 
 import java.util.Arrays;
 import java.util.Random;

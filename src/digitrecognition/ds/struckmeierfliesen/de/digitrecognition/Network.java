@@ -6,7 +6,7 @@ import java.util.Random;
 import org.apache.commons.math3.linear.*;
 
 /**
- * Created by Daniel Schäfer on 04.04.2015.
+ * Created by Daniel SchÃ¤fer on 04.04.2015.
  */
 
 public class Network {
@@ -219,7 +219,7 @@ public class Network {
     	return MatrixUtils.createRealMatrix(array);
     }
 
-    // Implementing Fisher–Yates shuffle
+    // Implementing Fisher-Yates shuffle
     public static RealMatrix[][] shuffleArray(RealMatrix[][] ar) {
 		Random rnd = new Random();
 		for (int i = ar.length - 1; i > 0; i--) {

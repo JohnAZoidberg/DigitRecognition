@@ -26,7 +26,7 @@ import com.google.gson.*;
 
 
 /**
- * Created by Daniel Sch‰fer on 04.04.2015.
+ * Created by Daniel Sch√§fer on 04.04.2015.
  */
 
 public class Test {

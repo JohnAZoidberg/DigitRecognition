@@ -54,19 +54,19 @@ public class Test {
 			RealMatrix[] biases = weightsBiases[1];
 			net.setWeightsBiases(weights, biases);
 
-			String weightJson = jsonize(weights);
-			String biasJson = jsonize(biases);
-			double[][][] weightDoubles = dejsonize(weightJson);
-			weights = new RealMatrix[3];
-			for(int i = 0; i < weightDoubles.length; i++) {
-				weights[i] = MatrixUtils.createRealMatrix(weightDoubles[i]);
-			}
-			double[][][] biasDoubles = dejsonize(biasJson);
-			biases = new RealMatrix[3];
-			for(int i = 0; i < biasDoubles.length; i++) {
-				biases[i] = MatrixUtils.createRealMatrix(biasDoubles[i]);
-			}
-			net.setWeightsBiases(weights, biases);
+			// String weightJson = jsonize(weights);
+			// String biasJson = jsonize(biases);
+			// double[][][] weightDoubles = dejsonize(weightJson);
+			// weights = new RealMatrix[3];
+			// for(int i = 0; i < weightDoubles.length; i++) {
+			// 	weights[i] = MatrixUtils.createRealMatrix(weightDoubles[i]);
+			// }
+			// double[][][] biasDoubles = dejsonize(biasJson);
+			// biases = new RealMatrix[3];
+			// for(int i = 0; i < biasDoubles.length; i++) {
+			// 	biases[i] = MatrixUtils.createRealMatrix(biasDoubles[i]);
+			// }
+			// net.setWeightsBiases(weights, biases);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -179,8 +179,8 @@ public class Test {
 		String biasesJSON = jsonize(biases);
 		System.out.println(weightsJSON);
 		try {
-			FileUtils.writeStringToFile(new File("customWeights.txt"), weightsJSON);
-			FileUtils.writeStringToFile(new File("customBiases.txt"), biasesJSON);
+			FileUtils.writeStringToFile(new File("network/customWeights.txt"), weightsJSON);
+			FileUtils.writeStringToFile(new File("network/customBiases.txt"), biasesJSON);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -278,7 +278,7 @@ public class Test {
 					System.out.println("Expected Accuracy: " + oldAccuracy + "%");
 					//testNet(net, weights, biases, testData);
 					int testNumber = (int)(Math.random() * datasetSize);
-					image = testData[testNumber];//loadImage("own5.png", 5);
+					image = testData[testNumber];//loadImage("data/custom_single/custom_single/5.png", 5);
 					displayData(image);
 					displayImage(image, true);
 					System.out.println("Test of saved weights and biases:");
@@ -418,8 +418,8 @@ public class Test {
 	}
 
 	private RealMatrix[][] loadJSONNet() throws IOException {
-		String weightJson = readStringFile("weights.txt");
-		String biasJson = readStringFile("biases.txt");
+		String weightJson = readStringFile("network/weights.txt");
+		String biasJson = readStringFile("network/biases.txt");
 
 		double[][][] weightDoubles = dejsonize(weightJson);
 		RealMatrix[] weights = new RealMatrix[2];
@@ -482,8 +482,8 @@ public class Test {
 	public static RealMatrix[][] importMNIST(String[] args, int startIndex, int endIndex) {
 		RealMatrix[][] data = new RealMatrix[endIndex - startIndex][3];
 		try {
-			DataInputStream labels = new DataInputStream(new FileInputStream(args[0]));
-			DataInputStream images = new DataInputStream(new FileInputStream(args[1]));
+			DataInputStream labels = new DataInputStream(new FileInputStream("data/mnist/" + args[0]));
+			DataInputStream images = new DataInputStream(new FileInputStream("data/mnist/" + args[1]));
 			int magicNumber = labels.readInt();
 			if (magicNumber != 2049) {
 				System.err.println("Label file has wrong magic number: " + magicNumber + " (should be 2049)");
@@ -572,8 +572,8 @@ public class Test {
 		int endIndex = nr;
 		double[][][][] data = new double[nr][2][][];
 		try {
-			DataInputStream labels = new DataInputStream(new FileInputStream(args[0]));
-			DataInputStream images = new DataInputStream(new FileInputStream(args[1]));
+			DataInputStream labels = new DataInputStream(new FileInputStream("data/mnist/" + args[0]));
+			DataInputStream images = new DataInputStream(new FileInputStream("data/mnist/" + args[1]));
 			int magicNumber = labels.readInt();
 			if (magicNumber != 2049) {
 				System.err.println("Label file has wrong magic number: " + magicNumber + " (should be 2049)");

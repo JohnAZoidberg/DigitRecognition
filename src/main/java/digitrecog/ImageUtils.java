@@ -178,7 +178,7 @@ public class ImageUtils {
 
 	public static void saveExample(char keyChar, BufferedImage image) {
 		try {
-			File imageFile = new File("customTraining" + keyChar + ".png");
+			File imageFile = new File("data/custom_training/customTraining" + keyChar + ".png");
 			BufferedImage savedImage = ImageIO.read(imageFile);
 	        image = ImageUtils.getCroppedImage(image, 0);
 	        image = ImageUtils.resizeRatio(image, 20, 20);
@@ -216,7 +216,7 @@ public class ImageUtils {
     	ArrayList<RealMatrix[]> arrayData = new ArrayList<RealMatrix[]>();
     	for(int i = 0; i < 10; i++) {
     		try {
-				BufferedImage bigImage = ImageIO.read(new File("customTraining" + i + ".png"));
+				BufferedImage bigImage = ImageIO.read(new File("data/custom_training/customTraining" + i + ".png"));
 				BufferedImage[] images = splitImage(bigImage, 28);
 				for(BufferedImage image : images) {
 					arrayData.add(bufferedImageToRealMatrix(image, i));

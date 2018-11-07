@@ -11,7 +11,7 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 
 public class DrawWindow {
-	private Test test;
+    private Test test;
     private BufferedImage canvasImage;
 
     private JPanel gui;
@@ -29,11 +29,11 @@ public class DrawWindow {
     private RenderingHints renderingHints;
 
     public DrawWindow() {
-    	test = new Test();
+        test = new Test();
     }
 
     public JComponent getGui() {
-        if(gui == null) {
+        if (gui == null) {
             Map<Key, Object> hintsMap = new HashMap<RenderingHints.Key,Object>();
             hintsMap.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             hintsMap.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
@@ -89,8 +89,8 @@ public class DrawWindow {
 
             ActionListener clearListener = new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
-                	guessLabel.setText("");
-                	clear(canvasImage);
+                    guessLabel.setText("");
+                    clear(canvasImage);
                 }
             };
             JButton clearButton = new JButton("Clear");
@@ -147,55 +147,50 @@ public class DrawWindow {
     }
 
     class ImageMouseListener extends MouseAdapter {
-
         @Override
         public void mousePressed(MouseEvent arg0) {
-			if(arg0.getButton() == MouseEvent.BUTTON1) {
-				color = Color.BLACK;
-				draw(arg0.getPoint());
-			}else if(arg0.getButton() == MouseEvent.BUTTON3) {
-				color = Color.WHITE;
-				draw(arg0.getPoint());
-			}
+            if(arg0.getButton() == MouseEvent.BUTTON1) {
+                color = Color.BLACK;
+                draw(arg0.getPoint());
+            }else if(arg0.getButton() == MouseEvent.BUTTON3) {
+                color = Color.WHITE;
+                draw(arg0.getPoint());
+            }
         }
 
-		@Override
-		public void mouseReleased(MouseEvent e) {
-	        BufferedImage image = DrawWindow.this.canvasImage;
-			int[] guesses = test.guessDigit(image, 0);
-			guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
-		}
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            BufferedImage image = DrawWindow.this.canvasImage;
+            int[] guesses = test.guessDigit(image, 0);
+            guessLabel.setText("   Either " + guesses[0] + " or " + guesses[1]);
+        }
     }
 
     class ImageMouseMotionListener implements MouseMotionListener {
-
         @Override
         public void mouseDragged(MouseEvent arg0) {
-        	draw(arg0.getPoint());
+            draw(arg0.getPoint());
         }
 
-		@Override
-		public void mouseMoved(MouseEvent arg0) {
-		}
-
+        @Override
+        public void mouseMoved(MouseEvent arg0) {
+        }
     }
 
     class CanvasKeyListener implements KeyListener {
+        @Override
+        public void keyPressed(KeyEvent e) {
+        }
 
-    	@Override
-    	public void keyPressed(KeyEvent e) {
-    	}
+        @Override
+        public void keyReleased(KeyEvent e) {
+        }
 
-    	@Override
-    	public void keyReleased(KeyEvent e) {
-    	}
-
-    	@Override
-    	public void keyTyped(KeyEvent e) {
-	        BufferedImage image = DrawWindow.this.canvasImage;
-    		ImageUtils.saveExample(e.getKeyChar(), image);
-    		clear(canvasImage);
-    	}
-
+        @Override
+        public void keyTyped(KeyEvent e) {
+            BufferedImage image = DrawWindow.this.canvasImage;
+            ImageUtils.saveExample(e.getKeyChar(), image);
+            clear(canvasImage);
+        }
     }
 }

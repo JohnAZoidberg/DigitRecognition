@@ -31,14 +31,6 @@ import com.google.gson.*;
 
 public class Test {
 
-	public enum Mode {
-	    EVAL, TRAIN, DRAW
-	}
-	// Hier kann man einstellen, ob das Netzwerk trainiert werden soll,
-	// ob man zeichen kann und dies dann klassifiziert wird oder ob ein
-	// paar handgeschriebene und eingescannte Ziffern klassifiziert werden sollen.
-	static final Mode mode = Mode.DRAW;
-
 	static String[] paths = {"train-labels.idx1-ubyte", "train-images.idx3-ubyte"};
 	static String[] testPaths = {"t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte"};
 	Network net;
@@ -75,8 +67,10 @@ public class Test {
 
 	public static void main(String[] args) throws IOException {
 		Test test;
-		switch(mode) {
-		case DRAW:
+		switch(args[0]) {
+
+		// Create window with canvas - classify drawn numbers
+		case "draw":
 			Runnable r = new Runnable() {
 	            @Override
 	            public void run() {
@@ -100,11 +94,13 @@ public class Test {
 	        };
 	        SwingUtilities.invokeLater(r);
 	        break;
-		case TRAIN:
+		// Train network
+		case "train":
 			test = new Test();
 			test.train();
 			break;
-		case EVAL:
+		// Evaluate network based on custom test data
+		case "eval":
 			test = new Test();
 			test.evaluateCustomData();
 			break;

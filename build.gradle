@@ -24,12 +24,6 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
 }
 
-// create Gradle wrapper with command line `gradle wrapper` in terminal
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
-
-}
-
 mainClassName = "me.danielschaefer.digitrecognition.Test"
 
 jar {

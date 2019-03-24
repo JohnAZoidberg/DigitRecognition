@@ -63,9 +63,13 @@ public class Test {
     }
 
     public static void main(String[] args) throws IOException {
+	if (args.length == 0) {
+            System.out.println("Please enter a mode of operation as first argument: `draw`, `train` or `eval`");
+            return;
+	}
+
         Test test;
         switch(args[0]) {
-
         // Create window with canvas - classify drawn numbers
         case "draw":
             Runnable r = new Runnable() {

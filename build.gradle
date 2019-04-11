@@ -34,11 +34,11 @@ jar {
 
 task fatJar(type: Jar) {
      manifest {
-        attributes 'Implementation-Title': 'Gradle Jar File Example',
+        attributes 'Implementation-Title': 'DigitRecognition',
                    'Implementation-Version': version,
                    'Main-Class': 'me.danielschaefer.digitrecognition.Test'
     }
-    baseName = project.name + '-all'
+    baseName = project.name
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }

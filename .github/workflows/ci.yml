@@ -1,0 +1,37 @@
+name: Build and run
+
+on:
+  push:
+    branches: [ master, gh-actions ]
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Build with Gradle
+      uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
+      with:
+        gradle-version: '6.6'
+        arguments: build
+
+    - name: Try eval
+      uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
+      with:
+        gradle-version: '6.6'
+        arguments: run --args eval
+
+    - name: Try train
+      uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
+      with:
+        gradle-version: '6.6'
+        arguments: run --args train

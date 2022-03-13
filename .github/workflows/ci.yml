@@ -21,14 +21,17 @@ jobs:
     - name: Build with Gradle
       uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
       with:
+        gradle-version: '6.6'
         arguments: build
 
     - name: Try eval
       uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
       with:
+        gradle-version: '6.6'
         arguments: run --args eval
 
     - name: Try train
       uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
       with:
+        gradle-version: '6.6'
         arguments: run --args train

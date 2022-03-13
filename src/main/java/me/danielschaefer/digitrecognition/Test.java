@@ -149,7 +149,7 @@ public class Test {
         int testNumber = (int)(Math.random() * 100);
         RealMatrix[] img = testData[testNumber];
         //displayData(img);
-        displayImage(img, false);
+        //displayImage(img, false);
         System.out.println("Test of saved weights and biases:");
         RealMatrix expectedOutput = img[1];
         System.out.println("Expected Output(" + oldAccuracy + "%): " + expectedOutput.getColumnVector(0).getMaxIndex());
